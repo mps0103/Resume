@@ -1,0 +1,55 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- The app draws light chrome, so the system bars are forced light
+             to match. Without this the status bar text is invisible against
+             the light background during the pre-JS launch window. -->
+        <item name="android:statusBarColor">#F4F5F7</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <!--
+      The launch theme. Android 12+ always draws a splash from the launcher
+      icon; this replaces the default grey-on-white version with the brand
+      mark, and hands over to AppTheme once the activity is up.
+      postSplashScreenTheme is what performs that handover — without it the
+      app keeps the splash theme and loses AppTheme's system bar colours.
+
+      The background is the app's own background colour rather than the brand
+      navy. The splash is followed immediately by a light app, and a navy
+      launch window meant inverting the system bars for a few frames and then
+      flipping them back — a visible flash on every cold start. Matching the
+      app means there is nothing to flip and no flash to see.
+
+      windowSplashScreenIconBackgroundColor is deliberately NOT set: it only
+      exists from Android 12, and the navy disc behind the mark is drawn into
+      ic_splash_logo instead so every supported version looks the same.
+    -->
+    <style name="AppTheme.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <!--
+          Deliberately a STATIC mark, and deliberately not held open.
+
+          This window exists only to cover the gap before React Native can
+          draw; the branded splash is components/SplashOverlay, which can do
+          what this one fundamentally cannot — show the name and a tagline.
+
+          An animated icon here was worse than useless. Two splashes each
+          running their own animation have to hand over mid-motion, and
+          every mismatch in timing or position between them showed as a jump
+          or a ghosted double image. One still frame handing over to an
+          identical still frame cannot glitch.
+        -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+        <!-- Identical to AppTheme's bars, so the handover changes nothing. -->
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+</resources>

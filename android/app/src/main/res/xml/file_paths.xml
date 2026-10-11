@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+      Exported PDFs only. Nothing else is ever shareable.
+
+      react-native-html-to-pdf writes to getExternalFilesDir(null)/Documents
+      when external storage is mounted and falls back to filesDir/Documents
+      when it is not, so both are declared. Declaring only the internal path
+      makes FileProvider.getUriForFile throw and share silently fail.
+    -->
+    <external-files-path name="documents_external" path="Documents/" />
+    <files-path name="documents_internal" path="Documents/" />
+    <cache-path name="cache" path="." />
+</paths>

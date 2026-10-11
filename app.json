@@ -1,0 +1,8 @@
+{
+  "name": "ResumeBuilder",
+  "displayName": "Resume Builder",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-0000000000000000~0000000000",
+    "delay_app_measurement_init": true
+  }
+}

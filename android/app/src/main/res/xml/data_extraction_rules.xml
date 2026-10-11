@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <!--
+      Resumes contain personal contact details, so nothing is backed up to
+      Google's servers or transferred device-to-device. This matches the
+      Data safety declaration: no data leaves the device.
+    -->
+    <cloud-backup>
+        <exclude domain="root" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+    </device-transfer>
+</data-extraction-rules>

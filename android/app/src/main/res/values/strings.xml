@@ -1,0 +1,5 @@
+<resources>
+    <!-- Shown under the launcher icon. Keep under ~12 characters or Android
+         truncates it on the home screen. -->
+    <string name="app_name">Resume Builder</string>
+</resources>

@@ -1,0 +1,66 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Ads need network access. AD_ID must be declared explicitly or AdMob
+      cannot serve personalised ads on Android 13+, and the Play Data safety
+      form must match this declaration.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <!--
+      Deliberately NOT requested: READ/WRITE_EXTERNAL_STORAGE. Exported PDFs
+      go to the app's own Documents directory and are shared through a
+      FileProvider, which needs no storage permission and avoids the Play
+      declaration that broad storage access requires.
+    -->
+
+    <application
+        android:name=".MainApplication"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:usesCleartextTraffic="${usesCleartextTraffic}"
+        android:theme="@style/AppTheme">
+
+        <!--
+          The activity carries the splash theme, not AppTheme. Theme.SplashScreen
+          swaps itself out for postSplashScreenTheme as soon as
+          installSplashScreen() runs in onCreate.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/AppTheme.Splash"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          The AdMob application ID and the optimisation flags are NOT declared
+          here. react-native-google-mobile-ads reads them from the
+          "react-native-google-mobile-ads" key in app.json and injects these
+          meta-data entries itself via manifest placeholders. Declaring them
+          here as well fails the manifest merge.
+        -->
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>
