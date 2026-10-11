@@ -127,11 +127,6 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
                     <Text style={[styles.planName, on && styles.planNameOn]}>
                       {plan.name}
                     </Text>
-                    {plan.kind === 'lifetime' && (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>Best value</Text>
-                      </View>
-                    )}
                   </View>
                   <Text style={styles.planPeriod}>{plan.period}</Text>
                 </View>
@@ -152,21 +147,18 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
         {busy && busy !== 'restore' ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.ctaText}>
-            {selected?.kind === 'lifetime' ? 'Buy Pro' : 'Subscribe'}
-          </Text>
+          <Text style={styles.ctaText}>Subscribe</Text>
         )}
       </Pressable>
 
       {/*
-        The two products have genuinely different terms, and showing the
-        subscription's renewal wording over a one-time purchase would be a
-        false statement about what the user is about to be charged.
+        Play requires the renewal terms to be visible before purchase, not
+        only in the store listing.
       */}
       <Text style={styles.terms}>
-        {selected?.kind === 'lifetime'
-          ? 'A single payment through Google Play. Nothing renews and there is nothing to cancel — Pro stays on this Play account.'
-          : 'Billed through Google Play and renews automatically until cancelled. Cancel any time in the Play Store, at least 24 hours before the period ends.'}
+        Billed through Google Play and renews automatically until cancelled.
+        Cancel any time in the Play Store, at least 24 hours before the
+        period ends.
       </Text>
 
       <Pressable onPress={handleRestore} style={styles.ghost} disabled={!!busy}>
@@ -236,13 +228,6 @@ const styles = StyleSheet.create({
   planNameRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space(2) },
   planName: { fontSize: 16, fontWeight: '600', color: theme.color.text },
   planNameOn: { color: theme.color.accent },
-  badge: {
-    backgroundColor: theme.color.accent,
-    borderRadius: theme.radius.sm,
-    paddingHorizontal: theme.space(2),
-    paddingVertical: 2,
-  },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   planPeriod: { ...theme.font.hint, color: theme.color.textMuted, marginTop: 2 },
   planPrice: { fontSize: 16, fontWeight: '600', color: theme.color.text },
   planPriceOn: { color: theme.color.accent },

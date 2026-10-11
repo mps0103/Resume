@@ -69,14 +69,22 @@ exist. Debug builds always use Google's test units.
 
 ### 1.5 Play Console in-app products
 
-| Product ID | Type | Price |
-| --- | --- | --- |
-| `pro_monthly` | Subscription | ₹99 / month |
-| `pro_lifetime` | One-time product | ₹999 |
+| Product ID | Type | Price | Billing period |
+| --- | --- | --- | --- |
+| `pro_monthly` | Subscription | ₹199 | P1M (monthly) |
 
-The IDs must match `src/services/billing.ts` exactly. Billing cannot be
-tested from a locally built APK at all — upload to **internal testing**
-first and add licence testers under Setup → Licence testing.
+One product, and only one. There is no lifetime or yearly tier — the sku
+was removed from the code rather than hidden, so do not create one in the
+Console expecting the app to show it.
+
+The ID must match `SKU_MONTHLY` in `src/services/plans.ts` exactly, and
+the billing period must be **P1M**; the app never computes a price, it only
+renders what Play returns, so a product configured on the wrong cycle is
+invisible until somebody is charged.
+
+Billing cannot be tested from a locally built APK at all — upload to
+**internal testing** first and add licence testers under Setup → Licence
+testing.
 
 ---
 

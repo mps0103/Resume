@@ -12,20 +12,9 @@ import {
 import { createMMKV } from 'react-native-mmkv';
 import { testEntitlement } from './testMode';
 import { entitlementCeiling, lastVerdict } from './integrity';
-import {
-  ONE_TIME_SKUS,
-  Plan,
-  SKUS,
-  normalisePlans,
-  planKind,
-} from './plans';
+import { Plan, SKUS, normalisePlans, planKind } from './plans';
 
-export {
-  SKUS,
-  SKU_LIFETIME,
-  SKU_MONTHLY,
-  type Plan,
-} from './plans';
+export { SKUS, SKU_MONTHLY, type Plan } from './plans';
 
 /**
  * Play Billing is the only payment path. Google requires it for digital
@@ -95,15 +84,12 @@ export function resetFreeExports(): void {
   store.set(KEY_EXPORTS, 0);
 }
 
-function grant(productId: string): void {
+function grant(_productId: string): void {
   store.set(KEY_PRO, true);
-  // The lifetime purchase never lapses, so it is cached with no expiry at
-  // all — zero is read below as "does not expire". For the subscription this
-  // is a generous window, corrected by Play's own check on the next launch,
-  // and used only to age out a stale offline cache rather than as a source
-  // of truth.
-  const lifetime = planKind(productId) === 'lifetime';
-  store.set(KEY_EXPIRY, lifetime ? 0 : Date.now() + 32 * 24 * 60 * 60 * 1000);
+  // A generous window, corrected by Play's own check on the next launch. It
+  // is used only to age out a stale offline cache, never as a source of
+  // truth about whether the subscription is live.
+  store.set(KEY_EXPIRY, Date.now() + 32 * 24 * 60 * 60 * 1000);
 }
 
 function revoke(): void {
@@ -129,10 +115,9 @@ export async function startBilling(
       if (!purchase?.purchaseToken) return;
       if (!planKind(purchase.productId)) return;
       grant(purchase.productId);
-      // Acknowledging within three days is mandatory — Play auto-refunds any
-      // purchase left unacknowledged. isConsumable stays false for both: the
-      // lifetime product must never be consumed, or Play would forget it and
-      // the user would lose what they paid for.
+      // Acknowledging within three days is mandatory — Play auto-refunds
+      // any purchase left unacknowledged. A subscription is never
+      // consumable.
       await finishTransaction({ purchase, isConsumable: false });
       onChange('pro');
     }),
@@ -158,13 +143,8 @@ export async function restore(
   onChange?: (e: Entitlement) => void,
 ): Promise<Entitlement> {
   try {
-    // No argument: this must return the one-time lifetime purchase as well
-    // as any live subscription, and Play keeps returning a non-consumed
-    // one-time product forever, which is what makes lifetime restorable.
     const purchases = await getAvailablePurchases();
-    const active =
-      purchases?.find(p => ONE_TIME_SKUS.includes(p.productId)) ??
-      purchases?.find(p => SKUS.includes(p.productId));
+    const active = purchases?.find(p => SKUS.includes(p.productId));
     // What Play says is written to the cache; what the app should SHOW is
     // read back out of currentEntitlement(). The two differ in exactly one
     // case: a debug build with the test override on, where Play legitimately
@@ -185,14 +165,10 @@ export async function restore(
   }
 }
 
-/**
- * Both products in one query. 'all' is required rather than 'subs': the
- * lifetime purchase is a one-time in-app product, and a subs-only query
- * returns nothing for it, which shows up as a paywall missing half its rows.
- */
+/** There is one product, and it is a subscription. */
 export async function loadPlans(): Promise<Plan[]> {
   try {
-    const products = await fetchProducts({ skus: SKUS, type: 'all' });
+    const products = await fetchProducts({ skus: SKUS, type: 'subs' });
     return normalisePlans((products ?? []) as unknown[]);
   } catch {
     return [];
@@ -200,19 +176,10 @@ export async function loadPlans(): Promise<Plan[]> {
 }
 
 /**
- * Starts a purchase. The two products take different Play flows — a
- * subscription needs its offer token, a one-time product must not be sent
- * as 'subs' at all — so the caller passes the plan rather than a bare sku.
+ * Starts the purchase. Takes the plan rather than a bare sku because the
+ * subscription flow needs the offer token that came back with it.
  */
 export async function buy(plan: Plan): Promise<void> {
-  if (plan.kind === 'lifetime') {
-    await requestPurchase({
-      type: 'in-app',
-      request: { google: { skus: [plan.sku] } },
-    });
-    return;
-  }
-
   await requestPurchase({
     type: 'subs',
     request: {
