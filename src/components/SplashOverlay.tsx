@@ -35,8 +35,53 @@ const MARK = require('../assets/splash-mark.png');
 
 /** The size the platform draws the system splash icon at. */
 const MARK_SIZE = 160;
-/** How far the mark travels up to make room for the wordmark. */
-const MARK_LIFT = 26;
+
+/*
+ * The lockup: mark, wordmark, rule, tagline, measured as one object.
+ *
+ * Two rules from brand practice drive every number below.
+ *
+ * 1. Clear space is derived from the type, not picked by eye. The unit is
+ *    the wordmark's cap height, which is how a lockup keeps its proportions
+ *    when the type size changes. Flutter's brand guide states the same rule
+ *    as "a margin of at least the height of one F".
+ *
+ * 2. The LOCKUP is centred, not the mark. Centring the mark and letting the
+ *    text hang below it puts the composition's whole mass under the middle
+ *    of the screen, which is the "off balance" Flutter warns about — and it
+ *    is what made the spacing look wrong here. The mark still STARTS at
+ *    screen centre, because that is where the system splash leaves it, and
+ *    then rises by exactly the amount that centres the finished lockup.
+ */
+const NAME_SIZE = 32;
+const NAME_LEADING = 40;
+const TAG_LEADING = 16;
+const RULE_HEIGHT = 2;
+/** Cap height of the serif wordmark, near enough for spacing purposes. */
+const CAP = Math.round(NAME_SIZE * 0.7);
+
+const GAP_MARK_NAME = Math.round(CAP * 1.3);
+const GAP_NAME_RULE = CAP;
+const GAP_RULE_TAG = CAP;
+
+const LOCKUP_HEIGHT =
+  MARK_SIZE +
+  GAP_MARK_NAME +
+  NAME_LEADING +
+  GAP_NAME_RULE +
+  RULE_HEIGHT +
+  GAP_RULE_TAG +
+  TAG_LEADING;
+
+/**
+ * Sits the finished lockup a touch above true centre. A composition centred
+ * geometrically reads as slightly low, which is the oldest correction in
+ * layout and the reason this is not simply LOCKUP_HEIGHT / 2.
+ */
+const OPTICAL_RISE = 8;
+
+/** Exactly the travel that lands the centred lockup. */
+const MARK_LIFT = Math.round(LOCKUP_HEIGHT / 2 - MARK_SIZE / 2 + OPTICAL_RISE);
 
 /** Still, while the system splash fades out over the top of us. */
 const HOLD_MS = 160;
@@ -181,7 +226,11 @@ const styles = StyleSheet.create({
   },
   mark: { width: MARK_SIZE, height: MARK_SIZE },
 
-  nameWrap: { position: 'absolute', top: '50%', marginTop: BELOW_MARK + 26 },
+  nameWrap: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: BELOW_MARK + GAP_MARK_NAME,
+  },
   /**
    * Serif, not the system sans.
    *
@@ -197,24 +246,39 @@ const styles = StyleSheet.create({
    */
   name: {
     fontFamily: 'serif',
-    fontSize: 32,
+    fontSize: NAME_SIZE,
+    lineHeight: NAME_LEADING,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    // Display sizes need less tracking than body text, not more: the
+    // default fit already looks loose above about 28pt.
+    letterSpacing: 0.2,
     color: theme.color.accent,
   },
 
   rule: {
     position: 'absolute',
     top: '50%',
-    marginTop: BELOW_MARK + 82,
-    width: 48,
-    height: 3,
-    borderRadius: 2,
+    marginTop: BELOW_MARK + GAP_MARK_NAME + NAME_LEADING + GAP_NAME_RULE,
+    // Narrower, thinner and fainter than before. A rule is punctuation
+    // between the two lines; at 48x3 it was competing with them.
+    width: 40,
+    height: RULE_HEIGHT,
+    borderRadius: RULE_HEIGHT / 2,
     backgroundColor: theme.color.accent,
-    opacity: 0.3,
+    opacity: 0.25,
   },
 
-  tagWrap: { position: 'absolute', top: '50%', marginTop: BELOW_MARK + 104 },
+  tagWrap: {
+    position: 'absolute',
+    top: '50%',
+    marginTop:
+      BELOW_MARK +
+      GAP_MARK_NAME +
+      NAME_LEADING +
+      GAP_NAME_RULE +
+      RULE_HEIGHT +
+      GAP_RULE_TAG,
+  },
   /**
    * Small, wide-tracked and upper case, against the large serif above it.
    * The contrast in size and letterfit is what makes the pair read as
@@ -222,8 +286,9 @@ const styles = StyleSheet.create({
    */
   tagline: {
     fontSize: 11,
+    lineHeight: TAG_LEADING,
     fontWeight: '500',
-    letterSpacing: 2.6,
+    letterSpacing: 2.8,
     color: theme.color.textMuted,
   },
 });
