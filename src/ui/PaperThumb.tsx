@@ -1,6 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getTemplate } from '../templates/registry';
+/*
+  The static theme, deliberately, and not `useTheme()`.
+
+  Everything this draws sits on a white page, because that is what it is a
+  picture of — a sheet of paper that will be printed. Its rule colours and
+  its border are chosen to read against white, so following the app theme
+  would put a dark theme's near-white text colour onto white paper and
+  erase the thumbnail under exactly the themes that need it most.
+*/
 import { theme } from './theme';
 
 interface Props {

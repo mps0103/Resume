@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { theme } from './theme';
+import { Theme } from './theme';
+import { useTheme } from './ThemeProvider';
 import { Touchable } from './Touchable';
 import { Icon, IconName } from './Icon';
 
@@ -34,15 +35,18 @@ export function IconButton({
   label,
   style,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const tint =
     color ??
     (tone === 'danger'
-      ? theme.color.danger
+      ? t.color.danger
       : tone === 'soft'
-      ? theme.color.accent
+      ? t.color.accent
       : tone === 'onDark'
       ? '#fff'
-      : theme.color.textMuted);
+      : t.color.textMuted);
 
   return (
     <Touchable
@@ -68,16 +72,18 @@ export function IconButton({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  soft: { backgroundColor: theme.color.accentTint },
-  dangerTone: { backgroundColor: theme.color.dangerSoft },
-  onDark: { backgroundColor: 'rgba(255,255,255,0.16)' },
-  off: { opacity: 0.3 },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    base: {
+      width: 40,
+      height: 40,
+      borderRadius: t.radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    soft: { backgroundColor: t.color.accentTint },
+    dangerTone: { backgroundColor: t.color.dangerSoft },
+    onDark: { backgroundColor: 'rgba(255,255,255,0.16)' },
+    off: { opacity: 0.3 },
+  });
+}

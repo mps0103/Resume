@@ -1,5 +1,15 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+/*
+  The static theme, deliberately, and not `useTheme()`.
+
+  This is the screen that renders when the tree below it has already
+  failed, and it is a class component, so reading the theme would mean
+  wiring up a context consumer in the one place that has to work when
+  everything else did not. It renders in the default palette whatever the
+  user picked — self-consistent and legible, just not themed, which is the
+  right trade for the crash screen.
+*/
 import { theme } from '../ui/theme';
 
 interface Props {
