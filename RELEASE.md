@@ -44,18 +44,24 @@ designs locked, and nothing anywhere saying why. `signatureConfigured()`
 turns the check off entirely until a real value is pasted in, so an
 unconfigured signature means "cannot check" rather than "failed".
 
-### 1.3 Privacy policy and terms, publicly reachable
+### 1.3 Privacy policy and terms — DONE
 
-`src/config/legal.ts` points at `mps-apps.github.io`, which does not exist.
-Play rejects a listing whose privacy policy URL 404s. The policy must
-actually describe:
+Served by GitHub Pages from `docs/` on `main`:
 
-- **AdMob** — collects the advertising ID and device/usage data for ads
-- **Google Play Billing** — purchase state
-- That resume content never leaves the device
+- <https://mps0103.github.io/Resume/privacy.html>
+- <https://mps0103.github.io/Resume/terms.html>
 
-A GitHub Pages repo is fine and free. Update `HOST`, and set a real support
-address in `LEGAL_URLS.support` (currently `support@example.com`).
+`src/config/legal.ts` points at them, and the support address is
+`info@dealtrix.com`. The pages describe what the app actually does: AdMob
+(free tier only) takes the advertising ID, Play Billing handles payment,
+Play Integrity checks the app, and resume content never leaves the device.
+
+Two things to remember about this setup:
+
+- The pages are live the moment they are **pushed**, not when the app
+  updates. A policy edit is published immediately.
+- If the repo is ever renamed or made private, both URLs die and the Play
+  listing breaks with them.
 
 ### 1.4 AdMob app and ad units
 

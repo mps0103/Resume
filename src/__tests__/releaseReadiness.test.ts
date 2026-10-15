@@ -49,23 +49,38 @@ describe('release blockers', () => {
   const blockers = () => releaseBlockers({ signature: PLACEHOLDER_SIGNATURE });
 
   /**
-   * These assertions are expected to start failing as the placeholders get
-   * replaced. That is the point: each failure is the signal that one more
-   * item is genuinely done, and the test is then updated to match.
+   * These assertions are expected to fail as placeholders get replaced.
+   * That is the point: each failure is the signal that one more item is
+   * genuinely done, and the test is then narrowed to match.
+   *
+   * Already done, and pinned below so they cannot regress: the privacy and
+   * terms pages (GitHub Pages, from docs/) and the support address.
    */
   it('reports every placeholder still in the tree today', () => {
+    expect(blockers().map(b => b.id).sort()).toEqual([
+      'ad-app-id',
+      'ad-unit-banner',
+      'ad-unit-exportInterstitial',
+      'signing-certificate',
+    ]);
+  });
+
+  it('no longer flags the legal pages or the support address', () => {
     const ids = blockers().map(b => b.id);
-    expect(ids).toEqual(
-      expect.arrayContaining([
-        'ad-app-id',
-        'ad-unit-banner',
-        'ad-unit-exportInterstitial',
-        'signing-certificate',
-        'privacy-url',
-        'terms-url',
-        'support-email',
-      ]),
-    );
+    expect(ids).not.toContain('privacy-url');
+    expect(ids).not.toContain('terms-url');
+    expect(ids).not.toContain('support-email');
+  });
+
+  /**
+   * The pages are served from docs/ on this repo, so the files have to be
+   * there for the URLs the app links to to resolve. A 404 privacy policy
+   * fails Play review.
+   */
+  it('ships the pages those URLs actually point at', () => {
+    const fs = require('fs') as { existsSync(p: string): boolean };
+    expect(fs.existsSync('docs/privacy.html')).toBe(true);
+    expect(fs.existsSync('docs/terms.html')).toBe(true);
   });
 
   it('says where each one lives, not just what it is', () => {
