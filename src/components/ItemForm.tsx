@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Field, MonthPicker, ToggleRow } from './Field';
 import { BulletEditor } from './BulletEditor';
 import { SectionType } from '../types/resume';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 type Patch = Record<string, unknown>;
 
@@ -214,6 +215,9 @@ function DateRange({
   onPatch: (p: Patch) => void;
   currentLabel: string;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   return (
     <View>
       <View style={styles.dateRow}>
@@ -242,7 +246,9 @@ function DateRange({
   );
 }
 
-const styles = StyleSheet.create({
-  dateRow: { flexDirection: 'row', gap: theme.space(3) },
-  dateCol: { flex: 1 },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    dateRow: { flexDirection: 'row', gap: t.space(3) },
+    dateCol: { flex: 1 },
+  });
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,7 +11,8 @@ import { Resume, ResumeStyle } from '../types/resume';
 import { setStyle } from '../data/mutations';
 import { getTemplate, renderResume } from '../templates/registry';
 import { PAGE_DIMENSIONS } from '../templates/base';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 interface Props {
   resume: Resume;
@@ -44,6 +45,9 @@ const DENSITY_STEPS: { label: string; value: number }[] = [
 ];
 
 export function StyleScreen({ resume, update }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const template = getTemplate(resume.templateId);
   const html = renderResume(resume, { mode: 'preview' });
 
@@ -146,6 +150,9 @@ function Segmented<T extends string | number>({
   value: T;
   onChange: (v: T) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   return (
     <View style={styles.segment}>
       {options.map(o => {
@@ -166,63 +173,65 @@ function Segmented<T extends string | number>({
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { padding: theme.space(4), paddingBottom: theme.space(10) },
-
-  previewWrap: { alignItems: 'center', marginBottom: theme.space(6) },
-  sheet: {
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    borderRadius: theme.radius.sm,
-  },
-  /**
-   * Without this the box scales about its centre, which pushes a 794-wide
-   * page down and to the right out of a 300-wide frame and leaves only the
-   * bottom corner of the resume showing.
-   */
-  sheetInner: { transformOrigin: 'top left' },
-  web: { flex: 1, backgroundColor: '#fff' },
-  previewCaption: {
-    ...theme.font.hint,
-    color: theme.color.textFaint,
-    marginTop: theme.space(2),
-  },
-
-  group: {
-    ...theme.font.section,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(2),
-  },
-  note: {
-    ...theme.font.hint,
-    color: theme.color.textFaint,
-    marginTop: theme.space(2),
-    marginBottom: theme.space(5),
-    lineHeight: 17,
-  },
-
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.space(2.5) },
-  swatch: {
-    width: 38,
-    height: 38,
-    borderRadius: theme.radius.sm,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  swatchOn: { borderColor: theme.color.text },
-
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: theme.color.surface,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    borderRadius: theme.radius.md,
-    overflow: 'hidden',
-  },
-  segmentItem: { flex: 1, paddingVertical: theme.space(3), alignItems: 'center' },
-  segmentItemOn: { backgroundColor: theme.color.accent },
-  segmentText: { fontSize: 14, color: theme.color.textMuted },
-  segmentTextOn: { color: '#fff', fontWeight: '600' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    scroll: { padding: t.space(4), paddingBottom: t.space(10) },
+  
+    previewWrap: { alignItems: 'center', marginBottom: t.space(6) },
+    sheet: {
+      overflow: 'hidden',
+      backgroundColor: '#fff',
+      borderWidth: 1,
+      borderColor: t.color.border,
+      borderRadius: t.radius.sm,
+    },
+    /**
+     * Without this the box scales about its centre, which pushes a 794-wide
+     * page down and to the right out of a 300-wide frame and leaves only the
+     * bottom corner of the resume showing.
+     */
+    sheetInner: { transformOrigin: 'top left' },
+    web: { flex: 1, backgroundColor: '#fff' },
+    previewCaption: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      marginTop: t.space(2),
+    },
+  
+    group: {
+      ...t.font.section,
+      color: t.color.textMuted,
+      marginBottom: t.space(2),
+    },
+    note: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      marginTop: t.space(2),
+      marginBottom: t.space(5),
+      lineHeight: 17,
+    },
+  
+    swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space(2.5) },
+    swatch: {
+      width: 38,
+      height: 38,
+      borderRadius: t.radius.sm,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    swatchOn: { borderColor: t.color.text },
+  
+    segment: {
+      flexDirection: 'row',
+      backgroundColor: t.color.surface,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      borderRadius: t.radius.md,
+      overflow: 'hidden',
+    },
+    segmentItem: { flex: 1, paddingVertical: t.space(3), alignItems: 'center' },
+    segmentItemOn: { backgroundColor: t.color.accent },
+    segmentText: { fontSize: 14, color: t.color.textMuted },
+    segmentTextOn: { color: t.color.onAccent, fontWeight: '600' },
+  });
+}

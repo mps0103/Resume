@@ -11,7 +11,8 @@ import { WebView } from 'react-native-webview';
 import { Resume } from '../types/resume';
 import { allTemplates } from '../templates/registry';
 import { PAGE_DIMENSIONS } from '../templates/base';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 interface Props {
   resume: Resume;
@@ -53,6 +54,9 @@ export function TemplateGalleryScreen({
   onSelect,
   onOpenPaywall,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [filter, setFilter] = useState<Filter>('all');
   const long = useMemo(() => looksLong(resume), [resume]);
 
@@ -64,7 +68,7 @@ export function TemplateGalleryScreen({
   }, [filter]);
 
   const cols = 2;
-  const gutter = theme.space(4);
+  const gutter = t.space(4);
   const cardW =
     (Dimensions.get('window').width - gutter * (cols + 1)) / cols;
   const pageW = PAGE_DIMENSIONS[resume.style.pageSize].width;
@@ -192,94 +196,96 @@ export function TemplateGalleryScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.color.bg },
-  scroll: { padding: theme.space(4), paddingBottom: theme.space(8) },
-  lede: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(3),
-  },
-  filters: { flexDirection: 'row', gap: theme.space(2), marginBottom: theme.space(4) },
-  filter: {
-    paddingHorizontal: theme.space(3.5),
-    paddingVertical: theme.space(2),
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    backgroundColor: theme.color.surface,
-  },
-  filterOn: { backgroundColor: theme.color.accent, borderColor: theme.color.accent },
-  filterText: { fontSize: 13, color: theme.color.textMuted },
-  filterTextOn: { color: '#fff', fontWeight: '600' },
-  warn: {
-    fontSize: 11,
-    lineHeight: 15,
-    color: '#8A5A1E',
-    marginTop: theme.space(1.5),
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.space(4),
-  },
-  thumbFrame: {
-    overflow: 'hidden',
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    backgroundColor: '#fff',
-  },
-  thumbFrameOn: { borderWidth: 2, borderColor: theme.color.accent },
-  thumbInner: { transformOrigin: 'top left' },
-  web: { flex: 1, backgroundColor: '#fff' },
-
-  lockBadge: {
-    position: 'absolute',
-    top: theme.space(2),
-    right: theme.space(2),
-    backgroundColor: theme.color.text,
-    paddingHorizontal: theme.space(2),
-    paddingVertical: theme.space(1),
-    borderRadius: theme.radius.sm,
-  },
-  lockText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-  selectedBadge: {
-    position: 'absolute',
-    bottom: theme.space(2),
-    left: theme.space(2),
-    backgroundColor: theme.color.accent,
-    paddingHorizontal: theme.space(2),
-    paddingVertical: theme.space(1),
-    borderRadius: theme.radius.sm,
-  },
-  selectedText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-
-  name: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.color.text,
-    marginTop: theme.space(2),
-  },
-  blurb: {
-    ...theme.font.hint,
-    color: theme.color.textFaint,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-
-  upsell: {
-    marginTop: theme.space(6),
-    padding: theme.space(4),
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.color.accentSoft,
-  },
-  upsellTitle: { fontSize: 15, fontWeight: '600', color: theme.color.accent },
-  upsellBody: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: theme.color.accent,
-    marginTop: theme.space(1),
-  },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: t.color.bg },
+    scroll: { padding: t.space(4), paddingBottom: t.space(8) },
+    lede: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.color.textMuted,
+      marginBottom: t.space(3),
+    },
+    filters: { flexDirection: 'row', gap: t.space(2), marginBottom: t.space(4) },
+    filter: {
+      paddingHorizontal: t.space(3.5),
+      paddingVertical: t.space(2),
+      borderRadius: t.radius.sm,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      backgroundColor: t.color.surface,
+    },
+    filterOn: { backgroundColor: t.color.accent, borderColor: t.color.accent },
+    filterText: { fontSize: 13, color: t.color.textMuted },
+    filterTextOn: { color: t.color.onAccent, fontWeight: '600' },
+    warn: {
+      fontSize: 11,
+      lineHeight: 15,
+      color: t.color.warn,
+      marginTop: t.space(1.5),
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: t.space(4),
+    },
+    thumbFrame: {
+      overflow: 'hidden',
+      borderRadius: t.radius.sm,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      backgroundColor: '#fff',
+    },
+    thumbFrameOn: { borderWidth: 2, borderColor: t.color.accent },
+    thumbInner: { transformOrigin: 'top left' },
+    web: { flex: 1, backgroundColor: '#fff' },
+  
+    lockBadge: {
+      position: 'absolute',
+      top: t.space(2),
+      right: t.space(2),
+      backgroundColor: t.color.accent,
+      paddingHorizontal: t.space(2),
+      paddingVertical: t.space(1),
+      borderRadius: t.radius.sm,
+    },
+    lockText: { fontSize: 11, fontWeight: '700', color: t.color.onAccent },
+    selectedBadge: {
+      position: 'absolute',
+      bottom: t.space(2),
+      left: t.space(2),
+      backgroundColor: t.color.accent,
+      paddingHorizontal: t.space(2),
+      paddingVertical: t.space(1),
+      borderRadius: t.radius.sm,
+    },
+    selectedText: { fontSize: 11, fontWeight: '700', color: t.color.onAccent },
+  
+    name: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: t.color.text,
+      marginTop: t.space(2),
+    },
+    blurb: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      marginTop: 2,
+      lineHeight: 16,
+    },
+  
+    upsell: {
+      marginTop: t.space(6),
+      padding: t.space(4),
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.accentSoft,
+    },
+    upsellTitle: { fontSize: 15, fontWeight: '600', color: t.color.accent },
+    upsellBody: {
+      fontSize: 13,
+      lineHeight: 19,
+      color: t.color.accent,
+      marginTop: t.space(1),
+    },
+  });
+}

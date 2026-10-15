@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -17,6 +16,10 @@ import {
 } from '../services/exportResume';
 import { ActionSheet } from '../components/ActionSheet';
 import { appAlert } from '../components/AppDialog';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
+import { Touchable } from '../ui/Touchable';
+import { Icon } from '../ui/Icon';
 
 interface Props {
   resume: Resume;
@@ -39,6 +42,8 @@ export function PreviewScreen({
   onOpenPaywall,
   onEdit,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [exporting, setExporting] = useState(false);
   const [chooser, setChooser] = useState(false);
 
@@ -110,20 +115,25 @@ export function PreviewScreen({
       </View>
 
       <View style={styles.bar}>
-        <TouchableOpacity style={styles.secondary} onPress={onEdit}>
+        <Touchable style={styles.secondary} onPress={onEdit}>
+          <Icon name="pencil" size={17} color={t.color.text} />
           <Text style={styles.secondaryLabel}>Edit details</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Touchable>
+        <Touchable
           style={[styles.primary, exporting && styles.primaryBusy]}
           onPress={() => setChooser(true)}
           disabled={exporting}
+          scaleTo={0.97}
         >
           {exporting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={t.color.onAccent} />
           ) : (
-            <Text style={styles.primaryLabel}>Export</Text>
+            <>
+              <Icon name="share" size={17} color={t.color.onAccent} />
+              <Text style={styles.primaryLabel}>Export</Text>
+            </>
           )}
-        </TouchableOpacity>
+        </Touchable>
       </View>
 
       <ActionSheet
@@ -147,34 +157,50 @@ export function PreviewScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#eef0f3' },
-  stage: { flex: 1, backgroundColor: '#fff' },
-  web: { flex: 1, backgroundColor: '#fff' },
-  bar: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 12,
-    backgroundColor: '#fff',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#d6d9de',
-  },
-  secondary: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#c9ced5',
-  },
-  secondaryLabel: { fontSize: 15, fontWeight: '600', color: '#2b2f35' },
-  primary: {
-    flex: 1.4,
-    paddingVertical: 13,
-    borderRadius: 10,
-    alignItems: 'center',
-    backgroundColor: '#1F3A5F',
-  },
-  primaryBusy: { opacity: 0.75 },
-  primaryLabel: { fontSize: 15, fontWeight: '600', color: '#fff' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: t.color.bgSunken },
+    /*
+      The stage and the WebView stay white under every theme.
+
+      What is inside them is the resume itself — a sheet of paper that will
+      be printed and emailed. Tinting it to match a dark app theme would
+      mean previewing a document that does not exist.
+    */
+    stage: { flex: 1, backgroundColor: '#fff' },
+    web: { flex: 1, backgroundColor: '#fff' },
+    bar: {
+      flexDirection: 'row',
+      gap: t.space(2.5),
+      padding: t.space(3),
+      backgroundColor: t.color.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.color.border,
+    },
+    secondary: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      paddingVertical: t.space(3.5),
+      borderRadius: t.radius.md,
+      borderWidth: 1,
+      borderColor: t.color.borderStrong,
+    },
+    secondaryLabel: { fontSize: 15, fontWeight: '600', color: t.color.text },
+    primary: {
+      flex: 1.4,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      paddingVertical: t.space(3.5),
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.accent,
+      ...t.shadow.brand,
+    },
+    primaryBusy: { opacity: 0.75 },
+    primaryLabel: { fontSize: 15, fontWeight: '600', color: t.color.onAccent },
+  });
+}

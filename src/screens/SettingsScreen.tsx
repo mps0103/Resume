@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Linking,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,7 +22,11 @@ import {
   releaseBlockers,
 } from '../config/releaseReadiness';
 import { LEGAL_URLS, APP_NAME } from '../config/legal';
-import { theme } from '../ui/theme';
+import { buildTheme, Palette, Theme } from '../ui/theme';
+import { useAppearance, useTheme } from '../ui/ThemeProvider';
+import { Touchable } from '../ui/Touchable';
+import { Icon, IconName } from '../ui/Icon';
+import { Gradient } from '../ui/Gradient';
 import { appAlert } from '../components/AppDialog';
 
 interface Props {
@@ -52,6 +55,9 @@ export function SettingsScreen({
   onDataRestored,
   onUsageChange,
 }: Props) {
+  const t = useTheme();
+  const s = useMemo(() => makeStyles(t), [t]);
+
   const [busy, setBusy] = useState(false);
   const [dataBusy, setDataBusy] = useState<'export' | 'import' | null>(null);
   const isPro = entitlement === 'pro';
@@ -112,54 +118,113 @@ export function SettingsScreen({
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={[styles.planCard, isPro && styles.planCardPro]}>
-        <Text style={[styles.planTitle, isPro && styles.planTitlePro]}>
-          {isPro ? 'Pro' : 'Free plan'}
-        </Text>
-        <Text style={[styles.planBody, isPro && styles.planBodyPro]}>
-          {isPro
-            ? 'No watermark, unlimited exports, every design, no ads.'
-            : remaining > 0
-              ? `${remaining} of ${FREE_EXPORT_ALLOWANCE} watermarked exports left.`
+    <ScrollView
+      contentContainerStyle={s.scroll}
+      showsVerticalScrollIndicator={false}
+    >
+      {/*
+        The plan card leads with the gradient on Pro and a plain surface on
+        free, so the paid state is visibly the better-looking one.
+      */}
+      {isPro ? (
+        <Gradient from={t.color.heroFrom} to={t.color.heroTo} style={s.planPro}>
+          <View style={s.planHead}>
+            <View style={s.planCrown}>
+              <Icon name="crown" size={16} color={t.color.gold} />
+            </View>
+            <Text style={s.planTitlePro}>Pro</Text>
+          </View>
+          <Text style={s.planBodyPro}>
+            No watermark, unlimited exports, every design, no ads.
+          </Text>
+        </Gradient>
+      ) : (
+        <View style={s.planFree}>
+          <View style={s.planHead}>
+            <Text style={s.planTitle}>Free plan</Text>
+            <View style={s.quotaPill}>
+              <Text style={s.quotaText}>
+                {remaining}/{FREE_EXPORT_ALLOWANCE} left
+              </Text>
+            </View>
+          </View>
+          <Text style={s.planBody}>
+            {remaining > 0
+              ? 'Exports carry a watermark until you upgrade.'
               : 'You have used your free exports.'}
-        </Text>
-        {!isPro && (
-          <Pressable style={styles.cta} onPress={onOpenPaywall}>
-            <Text style={styles.ctaText}>See Pro</Text>
-          </Pressable>
-        )}
+          </Text>
+          {/* The quota as a bar: a number alone does not show how little is left. */}
+          <View style={s.track}>
+            <View
+              style={[
+                s.fill,
+                {
+                  width: `${Math.min(100, (freeExportsUsed / FREE_EXPORT_ALLOWANCE) * 100)}%`,
+                  backgroundColor:
+                    remaining === 0 ? t.color.danger : t.color.accent,
+                },
+              ]}
+            />
+          </View>
+          <Touchable onPress={onOpenPaywall} scaleTo={0.97} style={s.cta}>
+            <Icon name="crown" size={16} color={t.color.onAccent} />
+            <Text style={s.ctaText}>See Pro</Text>
+          </Touchable>
+        </View>
+      )}
+
+      {/*
+        Appearance sits first because it is the only setting whose effect is
+        visible while you are still looking at it — burying it under the
+        subscription rows would mean scrolling to find the thing that
+        repaints the screen you are on.
+      */}
+      <Group label="Appearance" styles={s} />
+      <View style={[s.card, s.cardPlain]}>
+        <ThemePicker />
       </View>
 
-      <Text style={styles.group}>Subscription</Text>
-      <View style={styles.card}>
+      <Group label="Subscription" styles={s} />
+      <View style={s.card}>
         <Row
+          icon="arrowDown"
           label={busy ? 'Checking…' : 'Restore purchase'}
           hint="If you reinstalled or changed device"
           onPress={busy ? undefined : handleRestore}
+          styles={s}
+          t={t}
         />
         <Row
+          icon="share"
           label="Manage or cancel"
           hint="Opens the Play Store"
           onPress={() => Linking.openURL(LEGAL_URLS.manageSubscription)}
           last
+          styles={s}
+          t={t}
         />
       </View>
 
-      <Text style={styles.group}>Your data</Text>
-      <View style={styles.card}>
+      <Group label="Your data" styles={s} />
+      <View style={s.card}>
         <Row
+          icon="upload"
           label={dataBusy === 'export' ? 'Preparing…' : 'Back up to a file'}
           hint="Saves every resume as one file you can keep anywhere"
           onPress={dataBusy ? undefined : handleExport}
+          styles={s}
+          t={t}
         />
         <Row
+          icon="doc"
           label={dataBusy === 'import' ? 'Restoring…' : 'Restore from a backup'}
           hint="Adds resumes from a backup file, keeping what is here"
           onPress={dataBusy ? undefined : handleImport}
+          styles={s}
+          t={t}
         />
-        <View style={styles.info}>
-          <Text style={styles.infoText}>
+        <View style={s.info}>
+          <Text style={s.infoText}>
             Everything you write is stored on this device only. Nothing is
             uploaded, so there is no account to close — and no copy for us to
             restore if the device is lost. A backup file is the only way back,
@@ -170,9 +235,10 @@ export function SettingsScreen({
 
       {testModeAvailable() && (
         <>
-          <Text style={styles.group}>Testing (debug build only)</Text>
-          <View style={styles.card}>
+          <Group label="Testing (debug build only)" styles={s} />
+          <View style={s.card}>
             <Row
+              icon="crown"
               label={
                 testEntitlement() === 'pro'
                   ? 'Testing as Pro'
@@ -184,8 +250,11 @@ export function SettingsScreen({
                 setTestEntitlement(next);
                 onEntitlementChange(next);
               }}
+              styles={s}
+              t={t}
             />
             <Row
+              icon="close"
               label="Reset free export count"
               hint={`${freeExportsUsed} of ${FREE_EXPORT_ALLOWANCE} used — clears the tally so the free tier can be tested again`}
               onPress={() => {
@@ -194,6 +263,8 @@ export function SettingsScreen({
                 appAlert('Reset', 'The free export count is back to zero.');
               }}
               last
+              styles={s}
+              t={t}
             />
           </View>
         </>
@@ -204,10 +275,10 @@ export function SettingsScreen({
         fails to arrive, that gate is exactly what hides everything, leaving
         nothing on screen to diagnose from. Remove before release.
       */}
-      <Text style={styles.group}>Build diagnostics</Text>
-      <View style={styles.card}>
-        <View style={styles.info}>
-          <Text style={styles.infoText}>{testModeDiagnostics()}</Text>
+      <Group label="Build diagnostics" styles={s} />
+      <View style={s.card}>
+        <View style={s.info}>
+          <Text style={s.mono}>{testModeDiagnostics()}</Text>
         </View>
       </View>
 
@@ -222,10 +293,10 @@ export function SettingsScreen({
       */}
       {testModeAvailable() && (
         <>
-          <Text style={styles.group}>Before Play upload</Text>
-          <View style={styles.card}>
-            <View style={styles.info}>
-              <Text style={styles.infoText}>
+          <Group label="Before Play upload" styles={s} />
+          <View style={s.card}>
+            <View style={s.info}>
+              <Text style={s.mono}>
                 {releaseBlockerSummary(
                   releaseBlockers({ signature: configuredSignature() }),
                 )}
@@ -244,9 +315,10 @@ export function SettingsScreen({
       */}
       {!isPro && adPrivacyOptionsRequired() && (
         <>
-          <Text style={styles.group}>Ads</Text>
-          <View style={styles.card}>
+          <Group label="Ads" styles={s} />
+          <View style={s.card}>
             <Row
+              icon="eye"
               label="Ad privacy choices"
               hint="Change or withdraw your consent for personalised ads"
               onPress={() => {
@@ -258,114 +330,396 @@ export function SettingsScreen({
                 );
               }}
               last
+              styles={s}
+              t={t}
             />
           </View>
         </>
       )}
 
-      <Text style={styles.group}>About</Text>
-      <View style={styles.card}>
-        <Row label="Privacy policy" onPress={() => Linking.openURL(LEGAL_URLS.privacy)} />
-        <Row label="Terms of use" onPress={() => Linking.openURL(LEGAL_URLS.terms)} />
-        <Row label="Contact support" onPress={() => Linking.openURL(LEGAL_URLS.support)} last />
+      <Group label="About" styles={s} />
+      <View style={s.card}>
+        <Row
+          icon="lock"
+          label="Privacy policy"
+          onPress={() => Linking.openURL(LEGAL_URLS.privacy)}
+          styles={s}
+          t={t}
+        />
+        <Row
+          icon="doc"
+          label="Terms of use"
+          onPress={() => Linking.openURL(LEGAL_URLS.terms)}
+          styles={s}
+          t={t}
+        />
+        <Row
+          icon="share"
+          label="Contact support"
+          onPress={() => Linking.openURL(LEGAL_URLS.support)}
+          last
+          styles={s}
+          t={t}
+        />
       </View>
 
-      <Text style={styles.version}>
+      <Text style={s.version}>
         {APP_NAME} {version}
       </Text>
     </ScrollView>
   );
 }
 
+function Group({
+  label,
+  styles,
+}: {
+  label: string;
+  styles: ReturnType<typeof makeStyles>;
+}) {
+  return <Text style={styles.group}>{label.toUpperCase()}</Text>;
+}
+
 function Row({
+  icon,
   label,
   hint,
   onPress,
   last,
+  styles,
+  t,
 }: {
+  icon: IconName;
   label: string;
   hint?: string;
   onPress?: () => void;
   last?: boolean;
+  styles: ReturnType<typeof makeStyles>;
+  t: Theme;
 }) {
   return (
-    <Pressable
+    <Touchable
       onPress={onPress}
       disabled={!onPress}
+      // Rows are full width, so a scale dip reads as the row pressing in.
+      scaleTo={0.99}
       style={[styles.row, last && styles.rowLast, !onPress && styles.rowOff]}
     >
+      <View style={styles.rowIcon}>
+        <Icon name={icon} size={17} color={t.color.accent} />
+      </View>
       <View style={styles.rowMain}>
         <Text style={styles.rowLabel}>{label}</Text>
         {!!hint && <Text style={styles.rowHint}>{hint}</Text>}
       </View>
-      <Text style={styles.chevron}>›</Text>
-    </Pressable>
+      {!!onPress && (
+        <Icon name="chevronRight" size={16} color={t.color.textFaint} />
+      )}
+    </Touchable>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { padding: theme.space(4), paddingBottom: theme.space(10) },
+/**
+ * The theme picker.
+ *
+ * Each option is rendered in its own colours rather than as a name and a
+ * dot: the only question the user is asking is "what will the app look
+ * like", and a swatch answers it without them having to apply each one and
+ * look. The previews are built with {@link buildTheme} on the candidate
+ * palette, which means a new palette needs no work here at all.
+ */
+function ThemePicker() {
+  const { palette, palettes, setPalette } = useAppearance();
+  const t = useTheme();
+  const s = useMemo(() => makeStyles(t), [t]);
 
-  planCard: {
-    backgroundColor: theme.color.accentSoft,
-    borderRadius: theme.radius.md,
-    padding: theme.space(4),
-    marginBottom: theme.space(6),
-  },
-  planCardPro: { backgroundColor: theme.color.accent },
-  planTitle: { fontSize: 17, fontWeight: '600', color: theme.color.accent },
-  planTitlePro: { color: '#fff' },
-  planBody: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.color.accent,
-    marginTop: theme.space(1.5),
-  },
-  planBodyPro: { color: 'rgba(255,255,255,0.88)' },
-  cta: {
-    marginTop: theme.space(4),
-    paddingVertical: theme.space(3),
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.color.accent,
-    alignItems: 'center',
-  },
-  ctaText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  return (
+    <View style={s.themeGrid}>
+      {palettes.map(p => (
+        <ThemeSwatch
+          key={p.id}
+          palette={p}
+          selected={p.id === palette.id}
+          onPress={() => setPalette(p.id)}
+        />
+      ))}
+    </View>
+  );
+}
 
-  group: {
-    ...theme.font.section,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(2),
-    marginLeft: theme.space(1),
-  },
-  card: {
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    marginBottom: theme.space(6),
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.space(4),
-    paddingVertical: theme.space(3.5),
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.color.border,
-  },
-  rowLast: { borderBottomWidth: 0 },
-  rowOff: { opacity: 0.6 },
-  rowMain: { flex: 1 },
-  rowLabel: { fontSize: 15, color: theme.color.text },
-  rowHint: { ...theme.font.hint, color: theme.color.textFaint, marginTop: 2 },
-  chevron: { fontSize: 20, color: theme.color.textFaint },
+function ThemeSwatch({
+  palette,
+  selected,
+  onPress,
+}: {
+  palette: Palette;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const t = useTheme();
+  const s = useMemo(() => makeStyles(t), [t]);
+  // The candidate theme, so the preview is literally what tapping it gives.
+  const preview = useMemo(() => buildTheme(palette), [palette]);
 
-  info: { padding: theme.space(4) },
-  infoText: { fontSize: 14, lineHeight: 20, color: theme.color.textMuted },
+  return (
+    <Touchable onPress={onPress} scaleTo={0.95} style={s.swatchWrap}>
+      <View
+        style={[
+          s.swatch,
+          { borderColor: selected ? t.color.accent : t.color.border },
+          selected && s.swatchOn,
+        ]}
+      >
+        {/* A miniature of the app: hero band, a card, and two text bars. */}
+        <Gradient
+          from={preview.color.heroFrom}
+          to={preview.color.heroTo}
+          steps={6}
+          style={s.swatchHero}
+        />
+        <View
+          style={[s.swatchBody, { backgroundColor: preview.color.bg }]}
+        >
+          <View
+            style={[
+              s.swatchCard,
+              {
+                backgroundColor: preview.color.surface,
+                borderColor: preview.color.border,
+              },
+            ]}
+          >
+            <View
+              style={[s.swatchBar, { backgroundColor: preview.color.accent, width: '55%' }]}
+            />
+            <View
+              style={[
+                s.swatchBar,
+                { backgroundColor: preview.color.borderStrong, width: '80%' },
+              ]}
+            />
+          </View>
+        </View>
 
-  version: {
-    ...theme.font.hint,
-    color: theme.color.textFaint,
-    textAlign: 'center',
-  },
-});
+        {selected && (
+          <View style={[s.swatchTick, { backgroundColor: t.color.accent }]}>
+            <Icon name="check" size={11} color={t.color.onAccent} weight={2} />
+          </View>
+        )}
+      </View>
+
+      <Text style={[s.swatchName, selected && s.swatchNameOn]}>
+        {palette.name}
+      </Text>
+      <Text style={s.swatchBlurb} numberOfLines={2}>
+        {palette.blurb}
+      </Text>
+    </Touchable>
+  );
+}
+
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    scroll: { padding: t.space(4), paddingBottom: t.space(10) },
+
+    planHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    planPro: {
+      borderRadius: t.radius.lg,
+      padding: t.space(4),
+      marginBottom: t.space(6),
+      ...t.shadow.md,
+    },
+    planCrown: {
+      width: 30,
+      height: 30,
+      borderRadius: t.radius.pill,
+      backgroundColor: 'rgba(255,255,255,0.16)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: t.space(2.5),
+    },
+    planTitlePro: {
+      ...t.font.h1,
+      color: t.color.onHero,
+      flex: 1,
+    },
+    planBodyPro: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.color.onHeroMuted,
+      marginTop: t.space(2),
+    },
+
+    planFree: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.lg,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      padding: t.space(4),
+      marginBottom: t.space(6),
+      ...t.shadow.sm,
+    },
+    planTitle: { ...t.font.h2, color: t.color.text },
+    quotaPill: {
+      paddingHorizontal: t.space(2.5),
+      paddingVertical: t.space(1),
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.accentSoft,
+    },
+    quotaText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: t.color.onAccentSoft,
+    },
+    planBody: {
+      fontSize: 13,
+      lineHeight: 19,
+      color: t.color.textMuted,
+      marginTop: t.space(1.5),
+    },
+    track: {
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: t.color.bgSunken,
+      overflow: 'hidden',
+      marginTop: t.space(3),
+    },
+    fill: { height: 5, borderRadius: 3 },
+    cta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      marginTop: t.space(4),
+      paddingVertical: t.space(3),
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.accent,
+      ...t.shadow.brand,
+    },
+    ctaText: { fontSize: 15, fontWeight: '700', color: t.color.onAccent },
+
+    group: {
+      ...t.font.section,
+      color: t.color.textFaint,
+      marginBottom: t.space(2),
+      marginLeft: t.space(1.5),
+    },
+    card: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.lg,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      marginBottom: t.space(6),
+      overflow: 'hidden',
+      ...t.shadow.sm,
+    },
+    // The picker brings its own padding, and a clipped grid would cut the
+    // selection ring off.
+    cardPlain: { padding: t.space(3), overflow: 'visible' },
+
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: t.space(3.5),
+      paddingVertical: t.space(3.5),
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.color.border,
+    },
+    rowLast: { borderBottomWidth: 0 },
+    rowOff: { opacity: 0.55 },
+    rowIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: t.radius.sm,
+      backgroundColor: t.color.accentTint,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: t.space(3),
+    },
+    rowMain: { flex: 1 },
+    rowLabel: { fontSize: 15, fontWeight: '500', color: t.color.text },
+    rowHint: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      marginTop: 2,
+      lineHeight: 17,
+    },
+
+    info: { padding: t.space(4) },
+    infoText: { fontSize: 14, lineHeight: 20, color: t.color.textMuted },
+    // Diagnostics are read character by character, so they get a fixed pitch.
+    mono: {
+      fontFamily: 'monospace',
+      fontSize: 12,
+      lineHeight: 18,
+      color: t.color.textMuted,
+    },
+
+    version: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      textAlign: 'center',
+    },
+
+    themeGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: t.space(3),
+    },
+    /*
+      Three to a row.
+
+      31% plus two 12pt gaps overflowed the card's inner width on a 360dp
+      screen by a couple of points, and flex-wrap answers an overflow by
+      dropping to two per row — which is how six themes came out as three
+      rows of two. 30% leaves the margin that rounding needs.
+    */
+    swatchWrap: { width: '30%' },
+    swatch: {
+      height: 78,
+      borderRadius: t.radius.md,
+      borderWidth: 1.5,
+      overflow: 'hidden',
+      backgroundColor: t.color.surface,
+    },
+    swatchOn: { ...t.shadow.brand },
+    swatchHero: { height: 26 },
+    swatchBody: { flex: 1, padding: 5 },
+    swatchCard: {
+      flex: 1,
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      padding: 4,
+      gap: 3,
+      justifyContent: 'center',
+    },
+    swatchBar: { height: 3, borderRadius: 1.5 },
+    swatchTick: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      width: 17,
+      height: 17,
+      borderRadius: 9,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    swatchName: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: t.color.text,
+      marginTop: t.space(1.5),
+    },
+    swatchNameOn: { color: t.color.accent },
+    swatchBlurb: {
+      fontSize: 10,
+      lineHeight: 13,
+      color: t.color.textFaint,
+      marginTop: 1,
+    },
+  });
+}

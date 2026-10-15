@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 export interface SheetAction {
   label: string;
@@ -25,6 +26,9 @@ interface Props {
  * warning, which is how the row menu ended up with no Cancel.
  */
 export function ActionSheet({ visible, title, actions, onClose }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   return (
     <Modal
       visible={visible}
@@ -71,45 +75,47 @@ export function ActionSheet({ visible, title, actions, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  scrim: {
-    flex: 1,
-    backgroundColor: 'rgba(16,19,23,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: theme.color.surface,
-    borderTopLeftRadius: theme.radius.lg,
-    borderTopRightRadius: theme.radius.lg,
-    paddingTop: theme.space(4),
-    paddingBottom: theme.space(4),
-    paddingHorizontal: theme.space(3),
-  },
-  title: {
-    ...theme.font.section,
-    color: theme.color.textMuted,
-    paddingHorizontal: theme.space(3),
-    paddingBottom: theme.space(2),
-  },
-  actions: {
-    borderRadius: theme.radius.md,
-    overflow: 'hidden',
-  },
-  row: {
-    paddingVertical: theme.space(3.5),
-    paddingHorizontal: theme.space(3),
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.color.border,
-  },
-  label: { fontSize: 16, color: theme.color.text },
-  destructive: { color: theme.color.danger },
-  hint: { ...theme.font.hint, color: theme.color.textFaint, marginTop: 2 },
-  cancel: {
-    marginTop: theme.space(3),
-    paddingVertical: theme.space(3.5),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    backgroundColor: theme.color.bg,
-  },
-  cancelLabel: { fontSize: 16, fontWeight: '600', color: theme.color.text },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    scrim: {
+      flex: 1,
+      backgroundColor: 'rgba(16,19,23,0.45)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: t.color.surface,
+      borderTopLeftRadius: t.radius.lg,
+      borderTopRightRadius: t.radius.lg,
+      paddingTop: t.space(4),
+      paddingBottom: t.space(4),
+      paddingHorizontal: t.space(3),
+    },
+    title: {
+      ...t.font.section,
+      color: t.color.textMuted,
+      paddingHorizontal: t.space(3),
+      paddingBottom: t.space(2),
+    },
+    actions: {
+      borderRadius: t.radius.md,
+      overflow: 'hidden',
+    },
+    row: {
+      paddingVertical: t.space(3.5),
+      paddingHorizontal: t.space(3),
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.color.border,
+    },
+    label: { fontSize: 16, color: t.color.text },
+    destructive: { color: t.color.danger },
+    hint: { ...t.font.hint, color: t.color.textFaint, marginTop: 2 },
+    cancel: {
+      marginTop: t.space(3),
+      paddingVertical: t.space(3.5),
+      borderRadius: t.radius.md,
+      alignItems: 'center',
+      backgroundColor: t.color.bg,
+    },
+    cancelLabel: { fontSize: 16, fontWeight: '600', color: t.color.text },
+  });
+}

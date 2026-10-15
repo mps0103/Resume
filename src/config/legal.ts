@@ -24,5 +24,5 @@ export const APP_NAME = 'Resume Builder';
  * Shown in Settings. Keep in step with versionName in
  * android/app/build.gradle — it is the string users quote in support mail.
  */
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 export const PACKAGE_NAME = 'com.mps.resumebuilder';

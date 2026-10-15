@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 /**
  * An in-app replacement for Alert.alert.
@@ -64,6 +65,9 @@ export function appAlert(
  * out of — must still be dismissible.
  */
 export function DialogHost() {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [pending, setPending] = useState<DialogRequest[]>([]);
 
   useEffect(() => {
@@ -153,59 +157,61 @@ export function DialogHost() {
   );
 }
 
-const styles = StyleSheet.create({
-  scrim: {
-    flex: 1,
-    backgroundColor: 'rgba(16,19,23,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme.space(6),
-  },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.lg,
-    paddingTop: theme.space(5),
-    paddingBottom: theme.space(3),
-    paddingHorizontal: theme.space(5),
-    elevation: 6,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.color.text,
-  },
-  // Capped so a long message — a restore summary listing every resume —
-  // scrolls instead of pushing the buttons off the bottom of the screen.
-  messageScroll: { maxHeight: 280, marginTop: theme.space(2) },
-  messageContent: { paddingBottom: theme.space(1) },
-  message: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.color.textMuted,
-  },
-
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.space(2),
-    marginTop: theme.space(5),
-  },
-  actionsStacked: { flexDirection: 'column-reverse', gap: theme.space(2) },
-  button: {
-    paddingVertical: theme.space(3),
-    paddingHorizontal: theme.space(4),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonInline: { minWidth: 92 },
-  buttonStacked: { width: '100%' },
-  buttonPrimary: { backgroundColor: theme.color.accent },
-  buttonPressed: { opacity: 0.7 },
-  buttonLabel: { fontSize: 15, fontWeight: '600', color: theme.color.accent },
-  buttonLabelPrimary: { color: '#fff' },
-  buttonLabelDanger: { color: theme.color.danger },
-  buttonLabelCancel: { color: theme.color.textMuted },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    scrim: {
+      flex: 1,
+      backgroundColor: 'rgba(16,19,23,0.45)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: t.space(6),
+    },
+    card: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.lg,
+      paddingTop: t.space(5),
+      paddingBottom: t.space(3),
+      paddingHorizontal: t.space(5),
+      elevation: 6,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: t.color.text,
+    },
+    // Capped so a long message — a restore summary listing every resume —
+    // scrolls instead of pushing the buttons off the bottom of the screen.
+    messageScroll: { maxHeight: 280, marginTop: t.space(2) },
+    messageContent: { paddingBottom: t.space(1) },
+    message: {
+      fontSize: 15,
+      lineHeight: 22,
+      color: t.color.textMuted,
+    },
+  
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: t.space(2),
+      marginTop: t.space(5),
+    },
+    actionsStacked: { flexDirection: 'column-reverse', gap: t.space(2) },
+    button: {
+      paddingVertical: t.space(3),
+      paddingHorizontal: t.space(4),
+      borderRadius: t.radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    buttonInline: { minWidth: 92 },
+    buttonStacked: { width: '100%' },
+    buttonPrimary: { backgroundColor: t.color.accent },
+    buttonPressed: { opacity: 0.7 },
+    buttonLabel: { fontSize: 15, fontWeight: '600', color: t.color.accent },
+    buttonLabelPrimary: { color: '#fff' },
+    buttonLabelDanger: { color: t.color.danger },
+    buttonLabelCancel: { color: t.color.textMuted },
+  });
+}

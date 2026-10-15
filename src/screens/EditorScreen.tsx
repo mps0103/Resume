@@ -28,7 +28,11 @@ import {
   updateLink,
 } from '../data/mutations';
 import { completeness } from '../services/completeness';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
+import { IconButton } from '../ui/IconButton';
+import { Icon } from '../ui/Icon';
+import { Touchable } from '../ui/Touchable';
 import { appAlert } from '../components/AppDialog';
 
 interface Props {
@@ -63,6 +67,9 @@ export function EditorScreen({
   onOpenSection,
   onPreview,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [showAdd, setShowAdd] = useState(false);
   const progress = useMemo(() => completeness(resume), [resume]);
 
@@ -103,26 +110,45 @@ export function EditorScreen({
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
+        {/*
+          The percentage is the one number on this screen the user is
+          working towards, so it is set as a figure rather than a label —
+          and the save state sits beside it as a dot, because "Saved" in
+          plain text next to it read as part of the same sentence.
+        */}
         <View style={styles.progressCard}>
           <View style={styles.progressHead}>
             <Text style={styles.progressPct}>
-              {Math.round(progress.score * 100)}% complete
+              {Math.round(progress.score * 100)}
+              <Text style={styles.progressPctSign}>%</Text>
             </Text>
-            <Text style={styles.saveState}>
-              {saving ? 'Saving' : 'Saved'}
-            </Text>
+            <View style={styles.saveState}>
+              <View
+                style={[
+                  styles.saveDot,
+                  { backgroundColor: saving ? t.color.warn : t.color.success },
+                ]}
+              />
+              <Text style={styles.saveStateText}>
+                {saving ? 'Saving' : 'Saved'}
+              </Text>
+            </View>
           </View>
+          <Text style={styles.progressLabel}>complete</Text>
           <View style={styles.track}>
             <View
               style={[styles.fill, { width: `${Math.max(4, progress.score * 100)}%` }]}
             />
           </View>
           {!!progress.nextStep && (
-            <Text style={styles.nextStep}>{progress.nextStep}</Text>
+            <View style={styles.nextStepRow}>
+              <Icon name="sparkle" size={14} color={t.color.onAccentSoft} />
+              <Text style={styles.nextStep}>{progress.nextStep}</Text>
+            </View>
           )}
         </View>
 
-        <Text style={styles.groupHeading}>About you</Text>
+        <Text style={styles.groupHeading}>ABOUT YOU</Text>
         <View style={styles.card}>
           <Field
             label="Full name"
@@ -159,7 +185,7 @@ export function EditorScreen({
           />
         </View>
 
-        <Text style={styles.groupHeading}>Links</Text>
+        <Text style={styles.groupHeading}>LINKS</Text>
         <View style={styles.card}>
           {resume.basics.links.map(link => (
             <View key={link.id} style={styles.linkRow}>
@@ -194,12 +220,13 @@ export function EditorScreen({
               No links yet. A portfolio or profile link is worth adding.
             </Text>
           )}
-          <Pressable onPress={() => update(addLink)} style={styles.ghostBtn}>
+          <Touchable onPress={() => update(addLink)} style={styles.ghostBtn}>
+            <Icon name="plus" size={15} color={t.color.accent} />
             <Text style={styles.ghostBtnText}>Add link</Text>
-          </Pressable>
+          </Touchable>
         </View>
 
-        <Text style={styles.groupHeading}>Summary</Text>
+        <Text style={styles.groupHeading}>SUMMARY</Text>
         <View style={styles.card}>
           <Field
             label="Summary"
@@ -211,7 +238,7 @@ export function EditorScreen({
           />
         </View>
 
-        <Text style={styles.groupHeading}>Sections</Text>
+        <Text style={styles.groupHeading}>SECTIONS</Text>
         <View style={styles.card}>
           {sections.map((section, i) => (
             <View key={section.id} style={styles.sectionRow}>
@@ -235,71 +262,82 @@ export function EditorScreen({
                 </Text>
               </Pressable>
 
+              {/*
+                Four controls per row, so they are deliberately compact —
+                32pt with hit slop rather than the 40pt used elsewhere, which
+                would not fit beside the section title on a narrow phone.
+              */}
               <View style={styles.sectionActions}>
-                <Pressable
+                <IconButton
+                  name="arrowUp"
+                  size={16}
+                  label={`Move ${section.title} up`}
                   onPress={() => update(r => moveSection(r, section.id, -1))}
                   disabled={i === 0}
-                  hitSlop={6}
-                  style={[styles.iconBtn, i === 0 && styles.iconBtnOff]}
-                >
-                  <Text style={styles.icon}>↑</Text>
-                </Pressable>
-                <Pressable
+                  style={styles.iconBtn}
+                />
+                <IconButton
+                  name="arrowDown"
+                  size={16}
+                  label={`Move ${section.title} down`}
                   onPress={() => update(r => moveSection(r, section.id, 1))}
                   disabled={i === sections.length - 1}
-                  hitSlop={6}
-                  style={[
-                    styles.iconBtn,
-                    i === sections.length - 1 && styles.iconBtnOff,
-                  ]}
-                >
-                  <Text style={styles.icon}>↓</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => update(r => toggleSectionVisible(r, section.id))}
-                  hitSlop={6}
                   style={styles.iconBtn}
-                >
-                  <Text style={styles.icon}>{section.visible ? '◉' : '○'}</Text>
-                </Pressable>
-                <Pressable
+                />
+                <IconButton
+                  name={section.visible ? 'eye' : 'eyeOff'}
+                  size={17}
+                  color={section.visible ? t.color.accent : t.color.textFaint}
+                  label={
+                    section.visible
+                      ? `Hide ${section.title}`
+                      : `Show ${section.title}`
+                  }
+                  onPress={() => update(r => toggleSectionVisible(r, section.id))}
+                  style={styles.iconBtn}
+                />
+                <IconButton
+                  name="trash"
+                  size={16}
+                  color={t.color.danger}
+                  label={`Remove ${section.title}`}
                   onPress={() =>
                     confirmRemove(section.id, section.title, section.items.length)
                   }
-                  hitSlop={6}
                   style={styles.iconBtn}
-                >
-                  <Text style={[styles.icon, styles.iconDanger]}>✕</Text>
-                </Pressable>
+                />
               </View>
             </View>
           ))}
 
           {showAdd ? (
             <View style={styles.addGrid}>
-              {ADDABLE.map(t => (
-                <Pressable
-                  key={t}
+              {ADDABLE.map(kind => (
+                <Touchable
+                  key={kind}
                   style={styles.addChip}
+                  scaleTo={0.94}
                   onPress={() => {
-                    update(r => addSection(r, t));
+                    update(r => addSection(r, kind));
                     setShowAdd(false);
                   }}
                 >
+                  <Icon name="plus" size={13} color={t.color.accent} />
                   <Text style={styles.addChipText}>
-                    {DEFAULT_SECTION_TITLES[t]}
+                    {DEFAULT_SECTION_TITLES[kind]}
                   </Text>
-                </Pressable>
+                </Touchable>
               ))}
             </View>
           ) : (
-            <Pressable onPress={() => setShowAdd(true)} style={styles.ghostBtn}>
+            <Touchable onPress={() => setShowAdd(true)} style={styles.ghostBtn}>
+              <Icon name="plus" size={15} color={t.color.accent} />
               <Text style={styles.ghostBtnText}>Add section</Text>
-            </Pressable>
+            </Touchable>
           )}
         </View>
 
-        <Text style={styles.groupHeading}>Declaration</Text>
+        <Text style={styles.groupHeading}>DECLARATION</Text>
         <View style={styles.card}>
           <ToggleRow
             label="Include a declaration"
@@ -376,124 +414,159 @@ export function EditorScreen({
       </ScrollView>
 
       <View style={styles.bar}>
-        <Pressable style={styles.primary} onPress={onPreview}>
+        <Touchable style={styles.primary} onPress={onPreview} scaleTo={0.97}>
+          <Icon name="doc" size={18} color={t.color.onAccent} />
           <Text style={styles.primaryText}>Preview resume</Text>
-        </Pressable>
+        </Touchable>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.color.bg },
-  scroll: { padding: theme.space(4), paddingBottom: theme.space(10) },
-
-  progressCard: {
-    backgroundColor: theme.color.accentSoft,
-    borderRadius: theme.radius.md,
-    padding: theme.space(4),
-    marginBottom: theme.space(5),
-  },
-  progressHead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  progressPct: { fontSize: 15, fontWeight: '600', color: theme.color.accent },
-  saveState: { ...theme.font.hint, color: theme.color.textMuted },
-  track: {
-    height: 4,
-    backgroundColor: '#D3DEEC',
-    borderRadius: 2,
-    marginTop: theme.space(2.5),
-    overflow: 'hidden',
-  },
-  fill: { height: 4, backgroundColor: theme.color.accent, borderRadius: 2 },
-  nextStep: {
-    fontSize: 13,
-    color: theme.color.accent,
-    marginTop: theme.space(2.5),
-  },
-
-  groupHeading: {
-    ...theme.font.section,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(2),
-    marginLeft: theme.space(1),
-  },
-  card: {
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    padding: theme.space(4),
-    paddingBottom: theme.space(2),
-    marginBottom: theme.space(5),
-  },
-  empty: {
-    ...theme.font.hint,
-    color: theme.color.textFaint,
-    marginBottom: theme.space(3),
-  },
-
-  linkRow: { flexDirection: 'row', gap: theme.space(3) },
-  linkFields: { flex: 1 },
-  removeLink: { paddingTop: theme.space(7) },
-  removeLinkText: { fontSize: 13, color: theme.color.danger },
-
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: theme.space(3),
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.color.border,
-  },
-  sectionMain: { flex: 1 },
-  sectionTitle: { fontSize: 15, color: theme.color.text, fontWeight: '500' },
-  sectionTitleHidden: { color: theme.color.textFaint },
-  sectionMeta: { ...theme.font.hint, color: theme.color.textFaint, marginTop: 2 },
-  sectionActions: { flexDirection: 'row', gap: theme.space(0.5) },
-  iconBtn: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.radius.sm,
-  },
-  iconBtnOff: { opacity: 0.25 },
-  icon: { fontSize: 15, color: theme.color.textMuted },
-  iconDanger: { color: theme.color.danger },
-
-  addGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.space(2),
-    paddingVertical: theme.space(3),
-  },
-  addChip: {
-    paddingHorizontal: theme.space(3.5),
-    paddingVertical: theme.space(2.5),
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.color.bg,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-  },
-  addChipText: { fontSize: 14, color: theme.color.text },
-
-  ghostBtn: { paddingVertical: theme.space(3), alignItems: 'center' },
-  ghostBtnText: { fontSize: 14, fontWeight: '600', color: theme.color.accent },
-
-  bar: {
-    padding: theme.space(3),
-    backgroundColor: theme.color.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.color.borderStrong,
-  },
-  primary: {
-    paddingVertical: theme.space(3.5),
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    backgroundColor: theme.color.accent,
-  },
-  primaryText: { fontSize: 15, fontWeight: '600', color: '#fff' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: t.color.bg },
+    scroll: { padding: t.space(4), paddingBottom: t.space(10) },
+  
+    progressCard: {
+      backgroundColor: t.color.accentSoft,
+      borderRadius: t.radius.lg,
+      padding: t.space(4),
+      marginBottom: t.space(5),
+    },
+    progressHead: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    progressPct: {
+      fontSize: 34,
+      fontWeight: '800',
+      letterSpacing: -1.2,
+      color: t.color.onAccentSoft,
+    },
+    progressPctSign: { fontSize: 20, fontWeight: '700' },
+    progressLabel: {
+      ...t.font.section,
+      color: t.color.onAccentSoft,
+      opacity: 0.7,
+      marginTop: -2,
+    },
+    saveState: { flexDirection: 'row', alignItems: 'center', gap: t.space(1.5) },
+    saveDot: { width: 7, height: 7, borderRadius: 3.5 },
+    saveStateText: {
+      ...t.font.hint,
+      fontWeight: '600',
+      color: t.color.onAccentSoft,
+    },
+    track: {
+      height: 6,
+      // A tint of the brand rather than a fixed grey, which was a hardcoded
+      // blue and turned muddy under every other theme.
+      backgroundColor: t.color.accentTint,
+      borderRadius: 3,
+      marginTop: t.space(3),
+      overflow: 'hidden',
+    },
+    fill: { height: 6, backgroundColor: t.color.accent, borderRadius: 3 },
+    nextStepRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.space(2),
+      marginTop: t.space(3),
+    },
+    nextStep: {
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 18,
+      color: t.color.onAccentSoft,
+    },
+  
+    groupHeading: {
+      ...t.font.section,
+      color: t.color.textFaint,
+      marginBottom: t.space(2),
+      marginLeft: t.space(1.5),
+    },
+    card: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.lg,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      padding: t.space(4),
+      paddingBottom: t.space(2),
+      marginBottom: t.space(5),
+      ...t.shadow.sm,
+    },
+    empty: {
+      ...t.font.hint,
+      color: t.color.textFaint,
+      marginBottom: t.space(3),
+    },
+  
+    linkRow: { flexDirection: 'row', gap: t.space(3) },
+    linkFields: { flex: 1 },
+    removeLink: { paddingTop: t.space(7) },
+    removeLinkText: { fontSize: 13, color: t.color.danger },
+  
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: t.space(3),
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.color.border,
+    },
+    sectionMain: { flex: 1 },
+    sectionTitle: { fontSize: 15, color: t.color.text, fontWeight: '500' },
+    sectionTitleHidden: { color: t.color.textFaint },
+    sectionMeta: { ...t.font.hint, color: t.color.textFaint, marginTop: 2 },
+    sectionActions: { flexDirection: 'row' },
+    iconBtn: { width: 32, height: 32 },
+  
+    addGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: t.space(2),
+      paddingVertical: t.space(3),
+    },
+    addChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.space(1.5),
+      paddingHorizontal: t.space(3),
+      paddingVertical: t.space(2.5),
+      borderRadius: t.radius.pill,
+      backgroundColor: t.color.accentTint,
+      borderWidth: 1,
+      borderColor: t.color.accentSoft,
+    },
+    addChipText: { fontSize: 13, fontWeight: '600', color: t.color.text },
+  
+    ghostBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      paddingVertical: t.space(3),
+    },
+    ghostBtnText: { fontSize: 14, fontWeight: '600', color: t.color.accent },
+  
+    bar: {
+      padding: t.space(3),
+      backgroundColor: t.color.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.color.borderStrong,
+    },
+    primary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      paddingVertical: t.space(3.5),
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.accent,
+      ...t.shadow.brand,
+    },
+    primaryText: { fontSize: 15, fontWeight: '600', color: t.color.onAccent },
+  });
+}

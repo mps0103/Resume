@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -22,7 +22,8 @@ import {
   renameSection,
   updateItem,
 } from '../data/mutations';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 import { appAlert } from '../components/AppDialog';
 
 interface Props {
@@ -38,6 +39,9 @@ interface Props {
  * accordion keeps the list visible while a single entry is open.
  */
 export function SectionEditorScreen({ resume, sectionId, update, onBack }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const section = getSection(resume, sectionId);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -177,84 +181,86 @@ export function SectionEditorScreen({ resume, sectionId, update, onBack }: Props
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.color.bg },
-  scroll: { padding: theme.space(4), paddingBottom: theme.space(12) },
-  gone: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  goneText: { fontSize: 15, color: theme.color.textMuted },
-
-  card: {
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    marginBottom: theme.space(3),
-    paddingHorizontal: theme.space(4),
-    paddingTop: theme.space(4),
-    paddingBottom: theme.space(1),
-  },
-  cardOpen: { borderColor: theme.color.accent },
-
-  emptyCard: {
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: theme.color.borderStrong,
-    padding: theme.space(6),
-    alignItems: 'center',
-    marginBottom: theme.space(3),
-  },
-  emptyTitle: { fontSize: 15, fontWeight: '600', color: theme.color.text },
-  emptyBody: {
-    ...theme.font.hint,
-    color: theme.color.textMuted,
-    textAlign: 'center',
-    marginTop: theme.space(1.5),
-  },
-
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: theme.space(3),
-  },
-  headMain: { flex: 1, paddingRight: theme.space(2) },
-  headTitle: { fontSize: 15, fontWeight: '500', color: theme.color.text },
-  headSub: { ...theme.font.hint, color: theme.color.textFaint, marginTop: 2 },
-  headActions: { flexDirection: 'row', gap: theme.space(0.5) },
-  iconBtn: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.radius.sm,
-  },
-  iconBtnOff: { opacity: 0.25 },
-  icon: { fontSize: 15, color: theme.color.textMuted },
-  iconDanger: { color: theme.color.danger },
-
-  form: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.color.border,
-    paddingTop: theme.space(4),
-  },
-  doneBtn: {
-    paddingVertical: theme.space(3),
-    alignItems: 'center',
-    marginBottom: theme.space(2),
-  },
-  doneText: { fontSize: 14, fontWeight: '600', color: theme.color.accent },
-
-  addBtn: {
-    paddingVertical: theme.space(3.5),
-    alignItems: 'center',
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.color.accent,
-    backgroundColor: theme.color.accentSoft,
-  },
-  addText: { fontSize: 15, fontWeight: '600', color: theme.color.accent },
-
-  ghostBtn: { paddingVertical: theme.space(3) },
-  ghostBtnText: { fontSize: 14, fontWeight: '600', color: theme.color.accent },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: t.color.bg },
+    scroll: { padding: t.space(4), paddingBottom: t.space(12) },
+    gone: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    goneText: { fontSize: 15, color: t.color.textMuted },
+  
+    card: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.md,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      marginBottom: t.space(3),
+      paddingHorizontal: t.space(4),
+      paddingTop: t.space(4),
+      paddingBottom: t.space(1),
+    },
+    cardOpen: { borderColor: t.color.accent },
+  
+    emptyCard: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.md,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: t.color.borderStrong,
+      padding: t.space(6),
+      alignItems: 'center',
+      marginBottom: t.space(3),
+    },
+    emptyTitle: { fontSize: 15, fontWeight: '600', color: t.color.text },
+    emptyBody: {
+      ...t.font.hint,
+      color: t.color.textMuted,
+      textAlign: 'center',
+      marginTop: t.space(1.5),
+    },
+  
+    head: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingBottom: t.space(3),
+    },
+    headMain: { flex: 1, paddingRight: t.space(2) },
+    headTitle: { fontSize: 15, fontWeight: '500', color: t.color.text },
+    headSub: { ...t.font.hint, color: t.color.textFaint, marginTop: 2 },
+    headActions: { flexDirection: 'row', gap: t.space(0.5) },
+    iconBtn: {
+      width: 30,
+      height: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: t.radius.sm,
+    },
+    iconBtnOff: { opacity: 0.25 },
+    icon: { fontSize: 15, color: t.color.textMuted },
+    iconDanger: { color: t.color.danger },
+  
+    form: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.color.border,
+      paddingTop: t.space(4),
+    },
+    doneBtn: {
+      paddingVertical: t.space(3),
+      alignItems: 'center',
+      marginBottom: t.space(2),
+    },
+    doneText: { fontSize: 14, fontWeight: '600', color: t.color.accent },
+  
+    addBtn: {
+      paddingVertical: t.space(3.5),
+      alignItems: 'center',
+      borderRadius: t.radius.md,
+      borderWidth: 1,
+      borderColor: t.color.accent,
+      backgroundColor: t.color.accentSoft,
+    },
+    addText: { fontSize: 15, fontWeight: '600', color: t.color.accent },
+  
+    ghostBtn: { paddingVertical: t.space(3) },
+    ghostBtnText: { fontSize: 14, fontWeight: '600', color: t.color.accent },
+  });
+}

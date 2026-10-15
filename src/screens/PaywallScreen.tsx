@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -13,7 +13,12 @@ import { Plan, defaultPlan } from '../services/plans';
 import { FREE_EXPORT_ALLOWANCE } from '../services/exportResume';
 import { allTemplates } from '../templates/registry';
 import { LEGAL_URLS } from '../config/legal';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
+import { Gradient } from '../ui/Gradient';
+import { Touchable } from '../ui/Touchable';
+import { Icon } from '../ui/Icon';
+import { IconButton } from '../ui/IconButton';
 import { appAlert } from '../components/AppDialog';
 
 interface Props {
@@ -40,6 +45,9 @@ const BENEFITS = [
  * from Play rather than being hardcoded, so they stay correct per country.
  */
 export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -87,27 +95,44 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
-      <Pressable onPress={onClose} hitSlop={10} style={styles.close}>
-        <Text style={styles.closeText}>✕</Text>
-      </Pressable>
+{/*
+        The header is the one place in the app that has to look like it is
+        worth paying for, so it carries the gradient rather than sitting on
+        a plain surface like every other screen's title.
+      */}
+      <Gradient from={t.color.heroFrom} to={t.color.heroTo} style={styles.hero}>
+        <View style={styles.heroTop}>
+          <View style={styles.crown}>
+            <Icon name="crown" size={22} color={t.color.gold} />
+          </View>
+          <IconButton
+            name="close"
+            tone="onDark"
+            label="Close"
+            onPress={onClose}
+          />
+        </View>
 
-      <Text style={styles.title}>Resume Builder Pro</Text>
-      <Text style={styles.lede}>
-        The free plan gives you {FREE_EXPORT_ALLOWANCE} watermarked exports.
-        Pro removes both limits.
-      </Text>
+        <Text style={styles.title}>Resume Builder Pro</Text>
+        <Text style={styles.lede}>
+          The free plan gives you {FREE_EXPORT_ALLOWANCE} watermarked exports.
+          Pro removes both limits.
+        </Text>
+      </Gradient>
 
       <View style={styles.benefits}>
         {BENEFITS.map(b => (
           <View key={b} style={styles.benefitRow}>
-            <Text style={styles.tick}>✓</Text>
+            <View style={styles.tick}>
+              <Icon name="check" size={12} color={t.color.success} weight={2.2} />
+            </View>
             <Text style={styles.benefitText}>{b}</Text>
           </View>
         ))}
       </View>
 
       {loading ? (
-        <ActivityIndicator style={styles.loader} color={theme.color.accent} />
+        <ActivityIndicator style={styles.loader} color={t.color.accent} />
       ) : plans.length === 0 ? (
         <Text style={styles.unavailable}>
           Plans could not be loaded. Check your connection and try again.
@@ -117,9 +142,10 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
           {plans.map(plan => {
             const on = selected?.sku === plan.sku;
             return (
-              <Pressable
+              <Touchable
                 key={plan.sku}
                 onPress={() => setSelected(plan)}
+                scaleTo={0.98}
                 style={[styles.plan, on && styles.planOn]}
               >
                 <View style={styles.planMain}>
@@ -133,23 +159,27 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
                 <Text style={[styles.planPrice, on && styles.planPriceOn]}>
                   {plan.price}
                 </Text>
-              </Pressable>
+              </Touchable>
             );
           })}
         </View>
       )}
 
-      <Pressable
+      <Touchable
         style={[styles.cta, (busy || !selected) && styles.ctaOff]}
         onPress={handleBuy}
         disabled={!!busy || !selected}
+        scaleTo={0.97}
       >
         {busy && busy !== 'restore' ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={t.color.onAccent} />
         ) : (
-          <Text style={styles.ctaText}>Subscribe</Text>
+          <>
+            <Icon name="crown" size={18} color={t.color.onAccent} />
+            <Text style={styles.ctaText}>Subscribe</Text>
+          </>
         )}
-      </Pressable>
+      </Touchable>
 
       {/*
         Play requires the renewal terms to be visible before purchase, not
@@ -161,11 +191,11 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
         period ends.
       </Text>
 
-      <Pressable onPress={handleRestore} style={styles.ghost} disabled={!!busy}>
+      <Touchable onPress={handleRestore} style={styles.ghost} disabled={!!busy}>
         <Text style={styles.ghostText}>
           {busy === 'restore' ? 'Checking…' : 'Restore purchase'}
         </Text>
-      </Pressable>
+      </Touchable>
 
       <View style={styles.legalRow}>
         <Pressable onPress={() => Linking.openURL(LEGAL_URLS.terms)}>
@@ -180,82 +210,130 @@ export function PaywallScreen({ onClose, onEntitlementChange }: Props) {
           <Text style={styles.legal}>Manage subscription</Text>
         </Pressable>
       </View>
+
+      <View style={styles.tail} />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    padding: theme.space(6),
-    paddingTop: theme.space(12),
-    backgroundColor: theme.color.surface,
-    flexGrow: 1,
-  },
-  close: { position: 'absolute', top: theme.space(5), right: theme.space(5) },
-  closeText: { fontSize: 18, color: theme.color.textMuted },
+function makeStyles(t: Theme) {
+  // The gutter the hero used to get from the scroll container's padding.
+  const gutter = t.space(6);
 
-  title: { fontSize: 26, fontWeight: '600', color: theme.color.text },
-  lede: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.color.textMuted,
-    marginTop: theme.space(2),
-  },
-
-  benefits: { marginTop: theme.space(6), gap: theme.space(2.5) },
-  benefitRow: { flexDirection: 'row', gap: theme.space(3), alignItems: 'center' },
-  tick: { fontSize: 14, color: theme.color.success, fontWeight: '700' },
-  benefitText: { fontSize: 15, color: theme.color.text, flex: 1 },
-
-  loader: { marginTop: theme.space(8) },
-  unavailable: {
-    marginTop: theme.space(8),
-    fontSize: 14,
-    color: theme.color.textMuted,
-  },
-
-  plans: { marginTop: theme.space(7), gap: theme.space(2.5) },
-  plan: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    borderRadius: theme.radius.md,
-    padding: theme.space(4),
-  },
-  planOn: { borderColor: theme.color.accent, backgroundColor: theme.color.accentSoft },
-  planMain: { flex: 1 },
-  planNameRow: { flexDirection: 'row', alignItems: 'center', gap: theme.space(2) },
-  planName: { fontSize: 16, fontWeight: '600', color: theme.color.text },
-  planNameOn: { color: theme.color.accent },
-  planPeriod: { ...theme.font.hint, color: theme.color.textMuted, marginTop: 2 },
-  planPrice: { fontSize: 16, fontWeight: '600', color: theme.color.text },
-  planPriceOn: { color: theme.color.accent },
-
-  cta: {
-    marginTop: theme.space(6),
-    paddingVertical: theme.space(4),
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.color.accent,
-    alignItems: 'center',
-  },
-  ctaOff: { opacity: 0.5 },
-  ctaText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-
-  terms: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: theme.color.textFaint,
-    marginTop: theme.space(4),
-  },
-  ghost: { paddingVertical: theme.space(4), alignItems: 'center' },
-  ghostText: { fontSize: 14, fontWeight: '600', color: theme.color.accent },
-  legalRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: theme.space(2),
-    marginTop: theme.space(2),
-  },
-  legal: { fontSize: 12, color: theme.color.textMuted },
-  legalSep: { fontSize: 12, color: theme.color.textFaint },
-});
+  return StyleSheet.create({
+    // No padding: the hero has to reach all three edges.
+    scroll: { backgroundColor: t.color.surface, flexGrow: 1 },
+    hero: {
+      paddingHorizontal: t.space(6),
+      paddingTop: t.space(6),
+      paddingBottom: t.space(7),
+      borderBottomLeftRadius: t.radius.xl,
+      borderBottomRightRadius: t.radius.xl,
+    },
+    heroTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: t.space(4),
+    },
+    crown: {
+      width: 46,
+      height: 46,
+      borderRadius: t.radius.pill,
+      backgroundColor: 'rgba(255,255,255,0.16)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  
+    title: { ...t.font.display, color: t.color.onHero },
+    lede: {
+      fontSize: 15,
+      lineHeight: 22,
+      color: t.color.onHeroMuted,
+      marginTop: t.space(2),
+    },
+  
+    benefits: {
+      marginTop: t.space(6),
+      marginHorizontal: t.space(6),
+      gap: t.space(3),
+    },
+    benefitRow: { flexDirection: 'row', gap: t.space(3), alignItems: 'center' },
+    tick: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: t.color.successSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    benefitText: { fontSize: 15, color: t.color.text, flex: 1 },
+  
+    loader: { marginTop: t.space(8) },
+    unavailable: {
+      marginTop: t.space(8),
+      marginHorizontal: gutter,
+      fontSize: 14,
+      color: t.color.textMuted,
+    },
+  
+    plans: { marginTop: t.space(7), marginHorizontal: gutter, gap: t.space(2.5) },
+    plan: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1.5,
+      borderColor: t.color.border,
+      borderRadius: t.radius.lg,
+      padding: t.space(4),
+      backgroundColor: t.color.surface,
+    },
+    planOn: {
+      borderColor: t.color.accent,
+      backgroundColor: t.color.accentTint,
+      ...t.shadow.sm,
+    },
+    planMain: { flex: 1 },
+    planNameRow: { flexDirection: 'row', alignItems: 'center', gap: t.space(2) },
+    planName: { fontSize: 16, fontWeight: '600', color: t.color.text },
+    planNameOn: { color: t.color.accent },
+    planPeriod: { ...t.font.hint, color: t.color.textMuted, marginTop: 2 },
+    planPrice: { fontSize: 16, fontWeight: '600', color: t.color.text },
+    planPriceOn: { color: t.color.accent },
+  
+    cta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: t.space(2),
+      marginTop: t.space(6),
+      marginHorizontal: gutter,
+      paddingVertical: t.space(4),
+      borderRadius: t.radius.md,
+      backgroundColor: t.color.accent,
+      ...t.shadow.brand,
+    },
+    ctaOff: { opacity: 0.5 },
+    ctaText: { fontSize: 16, fontWeight: '700', color: t.color.onAccent },
+  
+    terms: {
+      fontSize: 12,
+      lineHeight: 17,
+      color: t.color.textFaint,
+      marginTop: t.space(4),
+      marginHorizontal: gutter,
+    },
+    ghost: { paddingVertical: t.space(4), alignItems: 'center' },
+    ghostText: { fontSize: 14, fontWeight: '600', color: t.color.accent },
+    legalRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: t.space(2),
+      marginTop: t.space(2),
+    },
+    legal: { fontSize: 12, color: t.color.textMuted },
+    legalSep: { fontSize: 12, color: t.color.textFaint },
+    // The legal row is the last thing on the screen and was flush with the
+    // bottom edge once the container stopped padding.
+    tail: { height: t.space(8) },
+  });
+}

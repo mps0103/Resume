@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -7,7 +7,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 interface Props {
   visible: boolean;
@@ -37,6 +38,9 @@ export function PromptDialog({
   onCancel,
   onSubmit,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [value, setValue] = useState(initialValue);
 
   // Reset each time it opens, so the previous edit does not leak into the
@@ -64,7 +68,7 @@ export function PromptDialog({
             value={value}
             onChangeText={setValue}
             placeholder={placeholder}
-            placeholderTextColor={theme.color.textFaint}
+            placeholderTextColor={t.color.textFaint}
             autoFocus
             selectTextOnFocus
             returnKeyType="done"
@@ -89,48 +93,50 @@ export function PromptDialog({
   );
 }
 
-const styles = StyleSheet.create({
-  scrim: {
-    flex: 1,
-    backgroundColor: 'rgba(16,19,23,0.45)',
-    justifyContent: 'center',
-    padding: theme.space(6),
-  },
-  card: {
-    backgroundColor: theme.color.surface,
-    borderRadius: theme.radius.lg,
-    padding: theme.space(5),
-  },
-  title: { fontSize: 17, fontWeight: '600', color: theme.color.text },
-  message: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: theme.color.textMuted,
-    marginTop: theme.space(2),
-  },
-  input: {
-    marginTop: theme.space(4),
-    borderWidth: 1,
-    borderColor: theme.color.borderStrong,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.space(3),
-    paddingVertical: theme.space(3),
-    fontSize: 16,
-    color: theme.color.text,
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: theme.space(2),
-    marginTop: theme.space(5),
-  },
-  button: {
-    paddingVertical: theme.space(2.5),
-    paddingHorizontal: theme.space(5),
-    borderRadius: theme.radius.md,
-  },
-  buttonLabel: { fontSize: 15, fontWeight: '600', color: theme.color.textMuted },
-  confirm: { backgroundColor: theme.color.accent },
-  confirmLabel: { fontSize: 15, fontWeight: '600', color: '#fff' },
-  disabled: { opacity: 0.5 },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    scrim: {
+      flex: 1,
+      backgroundColor: 'rgba(16,19,23,0.45)',
+      justifyContent: 'center',
+      padding: t.space(6),
+    },
+    card: {
+      backgroundColor: t.color.surface,
+      borderRadius: t.radius.lg,
+      padding: t.space(5),
+    },
+    title: { fontSize: 17, fontWeight: '600', color: t.color.text },
+    message: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.color.textMuted,
+      marginTop: t.space(2),
+    },
+    input: {
+      marginTop: t.space(4),
+      borderWidth: 1,
+      borderColor: t.color.borderStrong,
+      borderRadius: t.radius.md,
+      paddingHorizontal: t.space(3),
+      paddingVertical: t.space(3),
+      fontSize: 16,
+      color: t.color.text,
+    },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: t.space(2),
+      marginTop: t.space(5),
+    },
+    button: {
+      paddingVertical: t.space(2.5),
+      paddingHorizontal: t.space(5),
+      borderRadius: t.radius.md,
+    },
+    buttonLabel: { fontSize: 15, fontWeight: '600', color: t.color.textMuted },
+    confirm: { backgroundColor: t.color.accent },
+    confirmLabel: { fontSize: 15, fontWeight: '600', color: '#fff' },
+    disabled: { opacity: 0.5 },
+  });
+}

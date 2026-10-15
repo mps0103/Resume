@@ -1,11 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import {
-  BackHandler,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BackHandler, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Share from 'react-native-share';
 
@@ -50,13 +44,17 @@ import { checkIntegrity } from './src/services/integrity';
 import { hideSplash } from './src/services/splash';
 import { initTestMode } from './src/services/testMode';
 import { APP_VERSION } from './src/config/legal';
-import { theme } from './src/ui/theme';
+import { Theme, theme } from './src/ui/theme';
+import { ThemeProvider, useTheme } from './src/ui/ThemeProvider';
+import { Icon } from './src/ui/Icon';
+import { Touchable } from './src/ui/Touchable';
 
 import { previousRoute, type Route } from './src/navigation/routes';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { DialogHost, appAlert } from './src/components/AppDialog';
 
 function AppRoot() {
+  const t = useTheme();
   const [ready, setReady] = useState(false);
   const [route, setRoute] = useState<Route>({ name: 'home' });
   const [resumes, setResumes] = useState<ResumeSummary[]>([]);
@@ -163,8 +161,17 @@ function AppRoot() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+      {/*
+        A dark theme needs light status bar text. HomeScreen overrides this
+        again for itself, because its hero is dark under every theme.
+      */}
+      <StatusBar
+        barStyle={t.mode === 'dark' ? 'light-content' : 'dark-content'}
+      />
+      <SafeAreaView
+        style={[styles.root, { backgroundColor: t.color.bg }]}
+        edges={['top', 'bottom']}
+      >
         {route.name === 'home' && (
           <HomeScreen
             resumes={resumes}
@@ -193,7 +200,9 @@ function AppRoot() {
               saveResume(result.resume);
               refresh();
               setRoute({ name: 'editor', resumeId: result.resume.id });
-              appAlert('Resume imported', result.message, [{ text: 'Start editing' }]);
+              appAlert('Resume imported', result.message, [
+                { text: 'Start editing' },
+              ]);
             }}
             onCreateSample={() => {
               // A fresh id every time, so loading it twice gives two
@@ -452,8 +461,10 @@ function ResumeFlowInner({
                   {
                     text: 'Share',
                     onPress: () =>
-                      Share.open({ url: `file://${filePath}`, type: mimeType })
-                        .catch(() => {}),
+                      Share.open({
+                        url: `file://${filePath}`,
+                        type: mimeType,
+                      }).catch(() => {}),
                   },
                 ],
               );
@@ -476,21 +487,33 @@ function Chrome({
   action?: { label: string; onPress: () => void };
   children: React.ReactNode;
 }) {
+  const t = useTheme();
+  const c = useMemo(() => chromeStyles(t), [t]);
+
   return (
-    <View style={styles.root}>
-      <View style={styles.bar}>
-        <Text style={styles.back} onPress={onBack}>
-          ‹ Back
-        </Text>
-        <Text style={styles.barTitle} numberOfLines={1}>
+    <View style={[styles.root, { backgroundColor: t.color.bg }]}>
+      <View style={c.bar}>
+        <Touchable
+          onPress={onBack}
+          scaleTo={0.9}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          style={c.back}
+        >
+          <Icon name="chevronLeft" size={20} color={t.color.text} />
+        </Touchable>
+
+        <Text style={c.barTitle} numberOfLines={1}>
           {title}
         </Text>
+
         {action ? (
-          <Text style={styles.action} onPress={action.onPress}>
-            {action.label}
-          </Text>
+          <Touchable onPress={action.onPress} scaleTo={0.94} style={c.action}>
+            <Text style={c.actionText}>{action.label}</Text>
+          </Touchable>
         ) : (
-          <View style={styles.actionSpacer} />
+          <View style={c.spacer} />
         )}
       </View>
       {children}
@@ -498,32 +521,51 @@ function Chrome({
   );
 }
 
+/**
+ * The top bar for every screen that is not Home.
+ *
+ * Home draws its own gradient header instead, which is why this is plain:
+ * two chromes competing for the same job is how the old build ended up with
+ * a text "‹ Back" on one screen and nothing on another.
+ */
+function chromeStyles(t: Theme) {
+  return StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: t.space(2),
+      paddingVertical: t.space(2),
+      backgroundColor: t.color.surface,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: t.color.border,
+    },
+    back: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: t.radius.pill,
+    },
+    barTitle: {
+      flex: 1,
+      textAlign: 'center',
+      ...t.font.h2,
+      color: t.color.text,
+    },
+    action: {
+      minWidth: 56,
+      height: 40,
+      paddingHorizontal: t.space(2),
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    actionText: { fontSize: 15, fontWeight: '600', color: t.color.accent },
+    spacer: { width: 56 },
+  });
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: theme.color.bg },
-  bar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.space(4),
-    paddingVertical: theme.space(3),
-    backgroundColor: theme.color.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.color.border,
-  },
-  back: { fontSize: 15, color: theme.color.accent, width: 64 },
-  barTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.color.text,
-  },
-  action: {
-    fontSize: 15,
-    color: theme.color.accent,
-    width: 64,
-    textAlign: 'right',
-  },
-  actionSpacer: { width: 64 },
   missing: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   missingText: { fontSize: 15, color: theme.color.textMuted },
 });
@@ -536,13 +578,15 @@ const styles = StyleSheet.create({
 export default function App() {
   return (
     <ErrorBoundary>
-      <AppRoot />
-      {/*
+      <ThemeProvider>
+        <AppRoot />
+        {/*
         Outside AppRoot so a dialog outlives the screen that raised it: an
         export alert must still be dismissible if the user backs out of the
         preview while it is up.
       */}
-      <DialogHost />
+        <DialogHost />
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

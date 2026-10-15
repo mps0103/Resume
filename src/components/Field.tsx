@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -10,7 +10,8 @@ import {
   TextInputProps,
   View,
 } from 'react-native';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 interface FieldProps extends Omit<TextInputProps, 'style'> {
   label: string;
@@ -20,6 +21,9 @@ interface FieldProps extends Omit<TextInputProps, 'style'> {
 }
 
 export function Field({ label, hint, error, ...input }: FieldProps) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.field}>
@@ -34,7 +38,7 @@ export function Field({ label, hint, error, ...input }: FieldProps) {
           setFocused(false);
           input.onBlur?.(e);
         }}
-        placeholderTextColor={theme.color.textFaint}
+        placeholderTextColor={t.color.textFaint}
         style={[
           styles.input,
           input.multiline && styles.inputMultiline,
@@ -79,6 +83,9 @@ export function MonthPicker({
   minYear?: number;
   maxYear?: number;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState(() =>
     value ? parseInt(value.split('-')[0], 10) : new Date().getFullYear(),
@@ -168,6 +175,9 @@ export function ToggleRow({
   onChange: (v: boolean) => void;
   hint?: string;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   return (
     <View style={styles.toggleRow}>
       <View style={styles.toggleText}>
@@ -177,91 +187,93 @@ export function ToggleRow({
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ true: theme.color.accent, false: '#CBD1D8' }}
+        trackColor={{ true: t.color.accent, false: '#CBD1D8' }}
         thumbColor="#fff"
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  field: { marginBottom: theme.space(4) },
-  label: {
-    ...theme.font.label,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(1.5),
-  },
-  input: {
-    backgroundColor: theme.color.surface,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.space(3),
-    paddingVertical: theme.space(2.75),
-    fontSize: 15,
-    color: theme.color.text,
-  },
-  inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
-  inputFocused: { borderColor: theme.color.accent, backgroundColor: '#fff' },
-  inputError: { borderColor: theme.color.danger },
-  error: { ...theme.font.hint, color: theme.color.danger, marginTop: theme.space(1) },
-  hint: { ...theme.font.hint, color: theme.color.textFaint, marginTop: theme.space(1) },
-
-  picker: { justifyContent: 'center' },
-  pickerDisabled: { backgroundColor: '#F0F2F4' },
-  pickerValue: { fontSize: 15, color: theme.color.text },
-  pickerValueDisabled: { color: theme.color.textMuted },
-  pickerPlaceholder: { color: theme.color.textFaint },
-
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(16,19,23,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: theme.color.surface,
-    borderTopLeftRadius: theme.radius.lg,
-    borderTopRightRadius: theme.radius.lg,
-    padding: theme.space(5),
-    paddingBottom: theme.space(8),
-  },
-  sheetTitle: {
-    ...theme.font.title,
-    color: theme.color.text,
-    marginBottom: theme.space(4),
-  },
-  yearRow: { marginBottom: theme.space(4), flexGrow: 0 },
-  yearChip: {
-    paddingHorizontal: theme.space(3.5),
-    paddingVertical: theme.space(2),
-    borderRadius: theme.radius.sm,
-    marginRight: theme.space(2),
-    backgroundColor: theme.color.bg,
-  },
-  yearChipOn: { backgroundColor: theme.color.accent },
-  yearText: { fontSize: 14, color: theme.color.textMuted },
-  yearTextOn: { color: '#fff', fontWeight: '600' },
-  monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.space(2) },
-  monthCell: {
-    width: '23%',
-    paddingVertical: theme.space(3),
-    alignItems: 'center',
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.color.bg,
-  },
-  monthCellOn: { backgroundColor: theme.color.accent },
-  monthText: { fontSize: 14, color: theme.color.text },
-  monthTextOn: { color: '#fff', fontWeight: '600' },
-  clearBtn: { marginTop: theme.space(5), alignItems: 'center' },
-  clearText: { fontSize: 14, color: theme.color.textMuted },
-
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: theme.space(4),
-    gap: theme.space(4),
-  },
-  toggleText: { flex: 1 },
-  toggleLabel: { fontSize: 15, color: theme.color.text },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    field: { marginBottom: t.space(4) },
+    label: {
+      ...t.font.label,
+      color: t.color.textMuted,
+      marginBottom: t.space(1.5),
+    },
+    input: {
+      backgroundColor: t.color.surface,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      borderRadius: t.radius.md,
+      paddingHorizontal: t.space(3),
+      paddingVertical: t.space(2.75),
+      fontSize: 15,
+      color: t.color.text,
+    },
+    inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
+    inputFocused: { borderColor: t.color.accent, backgroundColor: '#fff' },
+    inputError: { borderColor: t.color.danger },
+    error: { ...t.font.hint, color: t.color.danger, marginTop: t.space(1) },
+    hint: { ...t.font.hint, color: t.color.textFaint, marginTop: t.space(1) },
+  
+    picker: { justifyContent: 'center' },
+    pickerDisabled: { backgroundColor: '#F0F2F4' },
+    pickerValue: { fontSize: 15, color: t.color.text },
+    pickerValueDisabled: { color: t.color.textMuted },
+    pickerPlaceholder: { color: t.color.textFaint },
+  
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(16,19,23,0.45)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: t.color.surface,
+      borderTopLeftRadius: t.radius.lg,
+      borderTopRightRadius: t.radius.lg,
+      padding: t.space(5),
+      paddingBottom: t.space(8),
+    },
+    sheetTitle: {
+      ...t.font.title,
+      color: t.color.text,
+      marginBottom: t.space(4),
+    },
+    yearRow: { marginBottom: t.space(4), flexGrow: 0 },
+    yearChip: {
+      paddingHorizontal: t.space(3.5),
+      paddingVertical: t.space(2),
+      borderRadius: t.radius.sm,
+      marginRight: t.space(2),
+      backgroundColor: t.color.bg,
+    },
+    yearChipOn: { backgroundColor: t.color.accent },
+    yearText: { fontSize: 14, color: t.color.textMuted },
+    yearTextOn: { color: '#fff', fontWeight: '600' },
+    monthGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: t.space(2) },
+    monthCell: {
+      width: '23%',
+      paddingVertical: t.space(3),
+      alignItems: 'center',
+      borderRadius: t.radius.sm,
+      backgroundColor: t.color.bg,
+    },
+    monthCellOn: { backgroundColor: t.color.accent },
+    monthText: { fontSize: 14, color: t.color.text },
+    monthTextOn: { color: '#fff', fontWeight: '600' },
+    clearBtn: { marginTop: t.space(5), alignItems: 'center' },
+    clearText: { fontSize: 14, color: t.color.textMuted },
+  
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: t.space(4),
+      gap: t.space(4),
+    },
+    toggleText: { flex: 1 },
+    toggleLabel: { fontSize: 15, color: t.color.text },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -7,7 +7,8 @@ import {
   View,
 } from 'react-native';
 import type { ComponentRef } from 'react';
-import { theme } from '../ui/theme';
+import { Theme } from '../ui/theme';
+import { useTheme } from '../ui/ThemeProvider';
 
 /**
  * Bullets are the part users spend most of their time on, so the editor
@@ -24,6 +25,9 @@ export function BulletEditor({
   onChange: (next: string[]) => void;
   placeholder?: string;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+
   type TextInputHandle = ComponentRef<typeof TextInput>;
   const refs = useRef<Record<number, TextInputHandle | null>>({});
 
@@ -77,7 +81,7 @@ export function BulletEditor({
             returnKeyType="next"
             multiline
             placeholder={placeholder}
-            placeholderTextColor={theme.color.textFaint}
+            placeholderTextColor={t.color.textFaint}
             style={styles.input}
           />
           <View style={styles.actions}>
@@ -111,50 +115,52 @@ export function BulletEditor({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { marginBottom: theme.space(4) },
-  label: {
-    ...theme.font.label,
-    color: theme.color.textMuted,
-    marginBottom: theme.space(2),
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: theme.color.surface,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    borderRadius: theme.radius.md,
-    paddingHorizontal: theme.space(3),
-    paddingVertical: theme.space(2),
-    marginBottom: theme.space(2),
-    gap: theme.space(2),
-  },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.color.accent,
-    marginTop: theme.space(3.5),
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    lineHeight: 21,
-    color: theme.color.text,
-    paddingVertical: theme.space(1),
-  },
-  actions: { flexDirection: 'row', gap: theme.space(1), marginTop: theme.space(1) },
-  iconBtn: {
-    width: 26,
-    height: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.radius.sm,
-  },
-  iconBtnOff: { opacity: 0.25 },
-  icon: { fontSize: 14, color: theme.color.textMuted },
-  iconDanger: { color: theme.color.danger },
-  add: { paddingVertical: theme.space(2.5), alignItems: 'center' },
-  addText: { fontSize: 14, fontWeight: '600', color: theme.color.accent },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { marginBottom: t.space(4) },
+    label: {
+      ...t.font.label,
+      color: t.color.textMuted,
+      marginBottom: t.space(2),
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: t.color.surface,
+      borderWidth: 1,
+      borderColor: t.color.border,
+      borderRadius: t.radius.md,
+      paddingHorizontal: t.space(3),
+      paddingVertical: t.space(2),
+      marginBottom: t.space(2),
+      gap: t.space(2),
+    },
+    dot: {
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+      backgroundColor: t.color.accent,
+      marginTop: t.space(3.5),
+    },
+    input: {
+      flex: 1,
+      fontSize: 15,
+      lineHeight: 21,
+      color: t.color.text,
+      paddingVertical: t.space(1),
+    },
+    actions: { flexDirection: 'row', gap: t.space(1), marginTop: t.space(1) },
+    iconBtn: {
+      width: 26,
+      height: 26,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: t.radius.sm,
+    },
+    iconBtnOff: { opacity: 0.25 },
+    icon: { fontSize: 14, color: t.color.textMuted },
+    iconDanger: { color: t.color.danger },
+    add: { paddingVertical: t.space(2.5), alignItems: 'center' },
+    addText: { fontSize: 14, fontWeight: '600', color: t.color.accent },
+  });
+}
