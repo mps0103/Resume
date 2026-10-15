@@ -159,6 +159,14 @@ dependencies {
     // the source. See NOTES.md, Modded APKs.
     implementation("com.google.android.play:integrity:1.4.0")
 
+    // PDF text extraction for importing an existing resume.
+    //
+    // Already present transitively via react-native-html-to-pdf, so this
+    // adds no app size — it is declared because that module keeps it as an
+    // "implementation" dependency, which does not put it on this module's
+    // compile classpath. Keep the version in step with that library's.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
     // Backport of the Android 12 splash screen API. targetSdk 36 means the
     // system draws a splash whether or not we ask for one, so the choice is
     // between branding it and shipping the default white-on-icon version.

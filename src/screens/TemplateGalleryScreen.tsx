@@ -11,7 +11,6 @@ import { WebView } from 'react-native-webview';
 import { Resume } from '../types/resume';
 import { allTemplates } from '../templates/registry';
 import { PAGE_DIMENSIONS } from '../templates/base';
-import { AdBanner } from '../components/AdBanner';
 import { theme } from '../ui/theme';
 
 interface Props {
@@ -189,7 +188,6 @@ export function TemplateGalleryScreen({
         )}
       </ScrollView>
 
-      <AdBanner entitlement={entitlement} />
     </View>
   );
 }

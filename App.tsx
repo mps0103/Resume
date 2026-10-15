@@ -10,6 +10,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Share from 'react-native-share';
 
 import { SplashOverlay } from './src/components/SplashOverlay';
+import { importExistingResume } from './src/services/importResume';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { EditorScreen } from './src/screens/EditorScreen';
 import { SectionEditorScreen } from './src/screens/SectionEditorScreen';
@@ -71,6 +72,8 @@ function AppRoot() {
    * without leaving the preview.
    */
   const [exportsUsed, setExportsUsed] = useState(0);
+  /** The file picker and the parse, which together take a moment. */
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     initDb();
@@ -171,6 +174,26 @@ function AppRoot() {
               saveResume(r);
               refresh();
               setRoute({ name: 'editor', resumeId: r.id });
+            }}
+            importing={importing}
+            onImport={async () => {
+              setImporting(true);
+              const result = await importExistingResume();
+              setImporting(false);
+
+              if ('cancelled' in result) return;
+              if (!result.ok) {
+                appAlert('Could not read that file', result.message);
+                return;
+              }
+
+              // Saved before the alert, not after: the user has to be able
+              // to dismiss the dialog, or background the app from it,
+              // without losing the import.
+              saveResume(result.resume);
+              refresh();
+              setRoute({ name: 'editor', resumeId: result.resume.id });
+              appAlert('Resume imported', result.message, [{ text: 'Start editing' }]);
             }}
             onCreateSample={() => {
               // A fresh id every time, so loading it twice gives two

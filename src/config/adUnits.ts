@@ -2,7 +2,7 @@
  * AdMob identifiers, kept free of any react-native import so the release
  * checklist can read them without dragging the ads SDK into a unit test.
  *
- * All three are still placeholders. Create the app and the two units in the
+ * Both are still placeholders. Create the app and the unit in the
  * AdMob console and paste the real values in. The android_app_id in app.json
  * has to be changed to match AD_APP_ID at the same time — the native SDK
  * reads it from there, not from here, and a mismatch crashes on launch.
@@ -10,8 +10,17 @@
 
 export const AD_APP_ID = 'ca-app-pub-0000000000000000~0000000000';
 
+/**
+ * The banner unit is gone, not merely unused.
+ *
+ * Banners were removed from the resume list and the design gallery: both
+ * are screens the user is reading and choosing on, and a strip of ad across
+ * the bottom of them bought very little while making the app look cheaper
+ * than what it charges for. The single interstitial after a completed
+ * export remains — it interrupts nothing, because the file is already
+ * saved by the time it shows.
+ */
 export const LIVE_AD_UNITS = {
-  banner: 'ca-app-pub-0000000000000000/0000000000',
   exportInterstitial: 'ca-app-pub-0000000000000000/1111111111',
 };
 

@@ -59,7 +59,6 @@ describe('release blockers', () => {
   it('reports every placeholder still in the tree today', () => {
     expect(blockers().map(b => b.id).sort()).toEqual([
       'ad-app-id',
-      'ad-unit-banner',
       'ad-unit-exportInterstitial',
       'signing-certificate',
     ]);

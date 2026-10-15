@@ -22,6 +22,7 @@ class AppSupportPackage : ReactPackage {
             BackupModule(reactContext),
             DownloadsModule(reactContext),
             BuildInfoModule(reactContext),
+            ResumeImportModule(reactContext),
         )
 
     override fun createViewManagers(

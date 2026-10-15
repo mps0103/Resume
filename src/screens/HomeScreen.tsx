@@ -7,7 +7,6 @@ import {
   View,
 } from 'react-native';
 import { ResumeSummary } from '../types/resume';
-import { AdBanner } from '../components/AdBanner';
 import { ActionSheet } from '../components/ActionSheet';
 import { PromptDialog } from '../components/PromptDialog';
 import { theme } from '../ui/theme';
@@ -17,6 +16,10 @@ interface Props {
   resumes: ResumeSummary[];
   entitlement: 'free' | 'pro';
   onCreate: () => void;
+  /** Reads an existing PDF or Word resume and fills the editor from it. */
+  onImport: () => void;
+  /** True while the file picker and the parse are running. */
+  importing: boolean;
   /** Fills a new resume with the sample content, for trying designs out. */
   onCreateSample: () => void;
   onOpen: (id: string) => void;
@@ -42,6 +45,8 @@ export function HomeScreen({
   resumes,
   entitlement,
   onCreate,
+  onImport,
+  importing,
   onCreateSample,
   onOpen,
   onDuplicate,
@@ -112,20 +117,40 @@ export function HomeScreen({
         )}
       />
 
-      <AdBanner entitlement={entitlement} />
-
       <View style={styles.bar}>
-        <Pressable style={styles.primary} onPress={onCreate}>
-          <Text style={styles.primaryText}>Create resume</Text>
+        {/*
+          Importing leads, deliberately.
+
+          Anyone opening this app almost certainly has a resume already —
+          that is why they want a better one. Starting from their own text
+          is both the fastest route to something finished and the least
+          daunting, where "Create resume" means facing twenty empty fields.
+        */}
+        <Pressable
+          style={[styles.primary, importing && styles.primaryBusy]}
+          onPress={importing ? undefined : onImport}
+          disabled={importing}
+        >
+          <Text style={styles.primaryText}>
+            {importing ? 'Reading your resume…' : 'Upload existing resume'}
+          </Text>
+          {!importing && (
+            <Text style={styles.primaryHint}>PDF or Word — we fill it in for you</Text>
+          )}
         </Pressable>
+
+        <Pressable style={styles.secondary} onPress={onCreate}>
+          <Text style={styles.secondaryText}>Create a new resume</Text>
+        </Pressable>
+
         {/*
           A filled resume is the only way to judge a design — an empty one
           renders every template as the same blank page. This is also the
           fastest way to check a build on a device without typing a resume in
           by hand.
         */}
-        <Pressable style={styles.secondary} onPress={onCreateSample}>
-          <Text style={styles.secondaryText}>Load a sample resume</Text>
+        <Pressable style={styles.tertiary} onPress={onCreateSample}>
+          <Text style={styles.tertiaryText}>Load a sample resume</Text>
         </Pressable>
       </View>
 
@@ -223,17 +248,31 @@ const styles = StyleSheet.create({
     borderTopColor: theme.color.borderStrong,
   },
   primary: {
-    paddingVertical: theme.space(3.5),
+    paddingVertical: theme.space(3),
     borderRadius: theme.radius.md,
     alignItems: 'center',
     backgroundColor: theme.color.accent,
   },
+  primaryBusy: { opacity: 0.7 },
   primaryText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  primaryHint: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 2,
+  },
   secondary: {
-    paddingVertical: theme.space(2.5),
+    paddingVertical: theme.space(3),
     marginTop: theme.space(2),
     borderRadius: theme.radius.md,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.color.borderStrong,
   },
-  secondaryText: { fontSize: 14, fontWeight: '500', color: theme.color.accent },
+  secondaryText: { fontSize: 15, fontWeight: '600', color: theme.color.text },
+  tertiary: {
+    paddingVertical: theme.space(2.5),
+    marginTop: theme.space(1),
+    alignItems: 'center',
+  },
+  tertiaryText: { fontSize: 14, fontWeight: '500', color: theme.color.accent },
 });

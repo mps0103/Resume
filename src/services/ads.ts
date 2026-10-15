@@ -19,7 +19,9 @@ export { adUnitsConfigured };
  *    one-star reviews, and an accidental tap there loses their place.
  *  - Never on the preview screen. That is the moment the paywall has to
  *    land cleanly.
- *  - Banner only on the resume list and the template gallery.
+ *  - No banners anywhere. They were on the resume list and the design
+ *    gallery and have been removed: those are screens the user is reading
+ *    and choosing on.
  *  - One interstitial, after a successful export, never before.
  *  - Nothing at all for Pro.
  *
@@ -57,16 +59,10 @@ export function adsAvailable(): boolean {
 }
 
 function adUnit(slot: keyof typeof LIVE_AD_UNITS): string {
-  if (shouldUseTestAds()) {
-    return slot === 'banner' ? TestIds.BANNER : TestIds.INTERSTITIAL;
-  }
-  return LIVE_AD_UNITS[slot];
+  return shouldUseTestAds() ? TestIds.INTERSTITIAL : LIVE_AD_UNITS[slot];
 }
 
 export const AD_UNITS = {
-  get banner() {
-    return adUnit('banner');
-  },
   get exportInterstitial() {
     return adUnit('exportInterstitial');
   },
@@ -157,6 +153,3 @@ export function showExportInterstitial(entitlement: 'free' | 'pro'): void {
   ad.show();
 }
 
-export function bannerEnabled(entitlement: 'free' | 'pro'): boolean {
-  return entitlement === 'free' && adsAvailable();
-}
